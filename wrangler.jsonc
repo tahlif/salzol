@@ -1,0 +1,8 @@
+{
+  // הגדרות Cloudflare Workers: אתר סטטי בלבד - מגיש את תיקיית site
+  "name": "salzol1",
+  "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./site"
+  }
+}
