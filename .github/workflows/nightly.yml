@@ -1,0 +1,47 @@
+name: nightly-prices
+
+on:
+  schedule:
+    - cron: '30 3 * * *'   # 06:30 שעון ישראל בקיץ - אחרי שקבצי הבוקר מתפרסמים
+  workflow_dispatch: {}     # הרצה ידנית מה-UI של גיטהאב
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: משיכת קבצי המחירים
+        run: node pipeline/fetch.js
+
+      - name: גיאוקוד סניפים חדשים (אינקרמנטלי)
+        run: node pipeline/geocode.js
+
+      - name: דיוק Google לסניפים חדשים (דורש secret בשם GOOGLE_MAPS_KEY)
+        env:
+          GOOGLE_MAPS_KEY: ${{ secrets.GOOGLE_MAPS_KEY }}
+        run: node pipeline/geocode-google.js
+
+      - name: הצמדה לנקודות סופרמרקטים ב-OSM
+        run: node pipeline/osm-pois.js
+
+      - name: דו"ח אימות מיקומים
+        run: node pipeline/verify-geo.js
+
+      - name: בנייה ועדכון שינויים
+        run: node pipeline/build.js
+
+      - name: קומיט של הדאטה המעודכן
+        run: |
+          git config user.name "zolli-bot"
+          git config user.email "actions@github.com"
+          git add site/data pipeline/geo.json pipeline/branches.json pipeline/osm-pois.json
+          git diff --cached --quiet || git commit -m "עדכון מחירים יומי $(date +%d.%m.%Y)"
+          git push

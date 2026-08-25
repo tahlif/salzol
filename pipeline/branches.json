@@ -1,0 +1,669 @@
+{
+  "shufersal": {
+    "north": {
+      "store": "342",
+      "name": "דיל כרמיאל- קניון לב",
+      "city": "",
+      "address": "מורד הגיא 100",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "359",
+      "name": "דיל חיפה- גרנד קניון",
+      "city": "שמחה גולן",
+      "address": "שמחה גולן 54",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "782",
+      "name": "BE ראשון לציון",
+      "city": "לחי",
+      "address": "לחי 2",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "117",
+      "name": "שלי תל אביב-איכילוב",
+      "city": "",
+      "address": "ויצמן 6",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "260",
+      "name": "דיל ירושלים-קניון תלפיות",
+      "city": "",
+      "address": "האומן 17",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "716",
+      "name": "Be mall 7  באר שבע",
+      "city": "",
+      "address": "30 הע\"ל",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "133",
+      "name": "יש חסד ביתר עילית-  הר\"ן",
+      "city": "",
+      "address": "הר\"ן 6 פינת פנים המאירים",
+      "district": "yosh"
+    }
+  },
+  "ramilevy": {
+    "north": {
+      "store": "036",
+      "name": "כרמיאל",
+      "city": "",
+      "address": "היוצרים 7",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "057",
+      "name": "עזריאלי חיפה",
+      "city": "",
+      "address": "משה פלימן 4&#x0D;",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "043",
+      "name": "ראשון לציון",
+      "city": "",
+      "address": "שד משה דיין מתחם סינימה",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "733",
+      "name": "בן יהודה תל אביב",
+      "city": "",
+      "address": "בן יהודה 23",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "049",
+      "name": "בית שמש",
+      "city": "יגאל אלון",
+      "address": "יגאל אלון 4",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "027",
+      "name": "באר שבע",
+      "city": "",
+      "address": "הע\"ל 7 עמק שרה",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "053",
+      "name": "אריאל",
+      "city": "",
+      "address": "הבנאי 6",
+      "district": "yosh"
+    }
+  },
+  "osherad": {
+    "north": {
+      "store": "019",
+      "name": "עפולה",
+      "city": "",
+      "address": "חיים לסקוב",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "030",
+      "name": "חיפה",
+      "city": "",
+      "address": "דרך בר יהודה 31",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "025",
+      "name": "ראשון לציון",
+      "city": "",
+      "address": "אצל 26",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "024",
+      "name": "תל אביב",
+      "city": "",
+      "address": "קרמינצקי 3",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "016",
+      "name": "בית שמש - גליל",
+      "city": "",
+      "address": "מורדי הגיטאות 6",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "013",
+      "name": "באר שבע",
+      "city": "",
+      "address": "הקוצר 15 אזור תעשיה עמק שרה",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "018",
+      "name": "ביתר עילית",
+      "city": "",
+      "address": "בניין דוד 5",
+      "district": "yosh"
+    }
+  },
+  "yohananof": {
+    "north": {
+      "store": "037",
+      "name": "עפולה",
+      "city": "",
+      "address": "קהילת ציון 30",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "022",
+      "name": "חדרה",
+      "city": "",
+      "address": "unknown",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "021",
+      "name": "סגולה פתח תקווה",
+      "city": "סגולה",
+      "address": "סגולה",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "032",
+      "name": "בן צבי תל אביב",
+      "city": "",
+      "address": "unknown",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "020",
+      "name": "ירושלים תלפיות",
+      "city": "",
+      "address": "האומן",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "040",
+      "name": "באר שבע",
+      "city": "",
+      "address": "unknown",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "027",
+      "name": "יד אליהו",
+      "city": "יגאל אלון",
+      "address": "יגאל אלון 57",
+      "district": "yosh"
+    }
+  },
+  "tivtaam": {
+    "north": {
+      "store": "010",
+      "name": "כרמיאל",
+      "city": "מעלה כמון מתחם ביג",
+      "address": "מעלה כמון 3 מתחם ביג",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "094",
+      "name": "קרית מוצקין",
+      "city": "",
+      "address": "ש\"י עגנון 16",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "002",
+      "name": "נתניה",
+      "city": "",
+      "address": "בני גאון 2",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "020",
+      "name": "חולון עזריאלי",
+      "city": "",
+      "address": "הרוקמים 26",
+      "district": "telaviv"
+    },
+    "south": {
+      "store": "015",
+      "name": "באר שבע חדש",
+      "city": "",
+      "address": "יצחק נפחא 25 מתחם מבנה",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "061",
+      "name": "חשמונאים 91",
+      "city": "חשמונאים",
+      "address": "חשמונאים 91",
+      "district": "yosh"
+    }
+  },
+  "hazihinam": {
+    "center": {
+      "store": "201",
+      "name": "הכשרת הישוב 3 · ראשון לציון",
+      "city": "ראשון לציון",
+      "address": "הכשרת הישוב 3 , ראשון לציון , ישראל",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "202",
+      "name": "כישור 22 · חולון",
+      "city": "חולון",
+      "address": "כישור 22, חולון, ישראל",
+      "district": "telaviv"
+    }
+  },
+  "carrefour": {
+    "north": {
+      "store": "126",
+      "name": "היפר עפולה",
+      "city": "עפולה",
+      "address": "שדרות מנחם בגין 53 , עפולה",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "140",
+      "name": "קרפור סיטי  גרינברג חיפה",
+      "city": "",
+      "address": "20 א.צ גרינברג",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "012",
+      "name": "פתח תקוה בר כוכבא",
+      "city": "פתח תקווה",
+      "address": "בר כוכבא 63 ,פתח תקווה",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "089",
+      "name": "קרפור סיטי TLV  תל אביב",
+      "city": "קניון גינדי רחוב קרליבך תל אביב",
+      "address": "קניון גינדי - רחוב קרליבך תל אביב",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "128",
+      "name": "היפר ירושלים תלפיות",
+      "city": "ירושלים",
+      "address": "האומן 14, ירושלים",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "440",
+      "name": "קרפור סיטי  צפון באר-שבע (2976)",
+      "city": "",
+      "address": "101 אברהם אבינו",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "447",
+      "name": "קרפור מרקט  קניון אביה (3300)",
+      "city": "",
+      "address": "קנ.אביה שד.שאול המלך",
+      "district": "yosh"
+    }
+  },
+  "keshet": {
+    "north": {
+      "store": "015",
+      "name": "כרמיאל",
+      "city": "",
+      "address": "היוצרים 7",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "003",
+      "name": "נשר",
+      "city": "",
+      "address": "הזית 1",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "013",
+      "name": "ראשון לציון",
+      "city": "",
+      "address": "ברשבסקי 33|",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "005",
+      "name": "קרית אליעזר",
+      "city": "תל אביב",
+      "address": "תל אביב 11",
+      "district": "telaviv"
+    },
+    "south": {
+      "store": "018",
+      "name": "באר שבע",
+      "city": "",
+      "address": "סולל בונה",
+      "district": "south"
+    }
+  },
+  "salachd": {
+    "north": {
+      "store": "017",
+      "name": "עפולה",
+      "city": "",
+      "address": "unknown",
+      "district": "north"
+    },
+    "south": {
+      "store": "013",
+      "name": "באר שבע",
+      "city": "",
+      "address": "הירדן 1",
+      "district": "south"
+    }
+  },
+  "stopmarket": {
+    "north": {
+      "store": "007",
+      "name": "איינשטיין",
+      "city": "רחוב איינשטיין",
+      "address": "רחוב איינשטיין 139",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "004",
+      "name": "יגור",
+      "city": "יגור",
+      "address": "קיבוץ יגור",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "010",
+      "name": "ראשון לציון",
+      "city": "",
+      "address": "ילדי טהרן 7",
+      "district": "center"
+    },
+    "south": {
+      "store": "012",
+      "name": "יהלום",
+      "city": "שדרות לנטוס",
+      "address": "שדרות לנטוס 10",
+      "district": "south"
+    }
+  },
+  "politzer": {
+    "haifa": {
+      "store": "008",
+      "name": "פרדס חנה",
+      "city": "",
+      "address": "הגלעד 1",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "009",
+      "name": "נתניה",
+      "city": "",
+      "address": "דודו דותן 10",
+      "district": "center"
+    }
+  },
+  "freshmarket": {},
+  "supersapir": {
+    "north": {
+      "store": "053",
+      "name": "עפולה נטו חיסכון* ת.",
+      "city": "",
+      "address": "ברזילי יוסף 3",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "163",
+      "name": "המכולת כרמל חיפה ת.",
+      "city": "",
+      "address": "unknown",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "194",
+      "name": "נטו חיסכון נתניה הפלדה* ת.",
+      "city": "",
+      "address": "unknown",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "160",
+      "name": "המכולת חולון ת.",
+      "city": "",
+      "address": "unknown",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "026",
+      "name": "בית הנציב ירושלים ת.",
+      "city": "דרך חברון",
+      "address": "דרך חברון 101",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "085",
+      "name": "נטו חיסכון באר שבע* ת.",
+      "city": "ברוך קטינקא באר שבע",
+      "address": "ברוך קטינקא 2 באר שבע 2",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "077",
+      "name": "סופר ספיר אריאל ב** ת.",
+      "city": "",
+      "address": "unknown",
+      "district": "yosh"
+    }
+  },
+  "kingstore": {
+    "north": {
+      "store": "015",
+      "name": "כרמיאל",
+      "city": "",
+      "address": "היוצרים 15",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "014",
+      "name": "כבאביר חיפה",
+      "city": "",
+      "address": "הלבונה 7 0",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "019",
+      "name": "רמלה",
+      "city": "שדרות הרצל",
+      "address": "שדרות הרצל, קריית הממשלה 91",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "018",
+      "name": "יפת-יפו תל אביב יום ביום",
+      "city": "",
+      "address": "יפת 65 65",
+      "district": "telaviv"
+    },
+    "south": {
+      "store": "008",
+      "name": "באר שבע",
+      "city": "",
+      "address": "קישון  32,מרכז מסחרי חוצות להב 0",
+      "district": "south"
+    }
+  },
+  "maayan2000": {
+    "north": {
+      "store": "028",
+      "name": "טבריה",
+      "city": "",
+      "address": "מיכאל 7",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "008",
+      "name": "פרי מגדים",
+      "city": "פרי מגדים",
+      "address": "פרי מגדים 19",
+      "district": "haifa"
+    },
+    "jerusalem": {
+      "store": "063",
+      "name": "מורדות גילה",
+      "city": "אבנר חי שאקי גילה ירושלים",
+      "address": "אבנר חי שאקי 27 גילה ירושלים 27",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "065",
+      "name": "מרכז גילת",
+      "city": "",
+      "address": "unknown",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "011",
+      "name": "הר חומה",
+      "city": "ברש רועי",
+      "address": "ברש רועי 1",
+      "district": "yosh"
+    }
+  },
+  "zolvebegadol": {
+    "jerusalem": {
+      "store": "003",
+      "name": "רמות עליית נוער",
+      "city": "ירושלים",
+      "address": "עליית הנוער 5",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "019",
+      "name": "אשדוד",
+      "city": "אשדוד",
+      "address": "הרי הגולן  רובע י\"א 12",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "009",
+      "name": "מעלה אדומים האבן",
+      "city": "מעלה אדומים",
+      "address": "האבן 15 אזור 07 15",
+      "district": "yosh"
+    }
+  },
+  "superbareket": {
+    "north": {
+      "store": "014",
+      "name": "ת\"א סלמה",
+      "city": "unknown",
+      "address": "unknown",
+      "district": "north"
+    },
+    "center": {
+      "store": "007",
+      "name": "ראשון לציון בקר",
+      "city": "ראשון לציון",
+      "address": "משה בקר 17",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "006",
+      "name": "תל אביב",
+      "city": "תל אביב - יפו",
+      "address": "שלבים 26",
+      "district": "telaviv"
+    }
+  },
+  "shefabirkathashem": {
+    "center": {
+      "store": "038",
+      "name": "שמאי אלעד",
+      "city": "",
+      "address": "שמאי 1",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "023",
+      "name": "כהנמן בני ברק",
+      "city": "",
+      "address": "כהנמן 107",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "022",
+      "name": "בן איש חי בית שמש",
+      "city": "",
+      "address": "בן איש חי 39",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "042",
+      "name": "אופקים",
+      "city": "",
+      "address": "ז'בוטינסקי 66",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "039",
+      "name": "מודיעין עילית",
+      "city": "",
+      "address": "ר' עקיבא 5",
+      "district": "yosh"
+    }
+  },
+  "shukhayir": {
+    "north": {
+      "store": "004",
+      "name": "רמות",
+      "city": "",
+      "address": "שד' גולדן מאיר 255",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "025",
+      "name": "חדרה",
+      "city": "",
+      "address": "רח' היוצרים , ONE מתחם 1",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "011",
+      "name": "כפר סבא מזרח",
+      "city": "",
+      "address": "אלי הורוביץ 26",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "014",
+      "name": "חולון סיירים",
+      "city": "",
+      "address": "המרכבה 73",
+      "district": "telaviv"
+    },
+    "south": {
+      "store": "017",
+      "name": "אשדוד סיטי",
+      "city": "קניון הסיטי שדרות מנחם בגין",
+      "address": "קניון הסיטי שדרות מנחם בגין 0",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "008",
+      "name": "גבעת זאב",
+      "city": "",
+      "address": "שכונת נווה מנחם , רח' קרדון 10",
+      "district": "yosh"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סלזול — משווים סל, קונים בזול</title>
+<meta name="description" content="השוואת מחירים בין רשתות השיווק בישראל לפי אזור מגורים, ישירות מקבצי שקיפות המחירים הרשמיים, מתעדכן כל יום.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css?b=20">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 class="logo">סַלְזוֹל<span>.</span></h1>
+    <span class="badge" id="updatedBadge">טוען…</span>
+  </header>
+  <p class="tagline">כמה באמת עולה הסל שלך בכל רשת, באזור שלך — מהמחירים הרשמיים שהרשתות מחויבות לפרסם בחוק.</p>
+
+  <div class="card mapcard">
+    <p class="maptitle">איפה אתם קונים?</p>
+    <div class="cityrow">
+      <input id="cityFilter" list="cityList" placeholder="בחרו יישוב — כל יישובי ישראל ברשימה…" autocomplete="off" aria-label="בחירת יישוב">
+      <datalist id="cityList"></datalist>
+      <button class="chip" id="cityClear" hidden>ניקוי ✕</button>
+    </div>
+    <div class="chips" id="popularChips" role="group" aria-label="ערים נפוצות"></div>
+    <div id="realmap" aria-label="מפת סניפים"></div>
+    <div class="legend" id="mapLegend"></div>
+    <div id="districtInfo" class="dinfo"></div>
+    <button class="linkbtn" id="branchesToggle" hidden>כל הסניפים באזור</button>
+    <div id="branchList" class="branches" hidden></div>
+  </div>
+
+  <div class="card">
+    <div class="searchbox">
+      <input id="search" type="search" placeholder="חפשו מוצר… קוטג', במבה, שמן זית" autocomplete="off" enterkeyhint="search" aria-label="חיפוש מוצר">
+      <svg class="sicon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <div class="suggest" id="suggest" hidden></div>
+    </div>
+    <div class="chips" id="sampleChips"></div>
+  </div>
+
+  <div class="card" id="basketCard">
+    <div class="tabbar" role="tablist">
+      <button class="tab" id="tabRegion" role="tab">השוואה לפי אזור</button>
+      <button class="tab" id="tabFav" role="tab">⭐ הסניפים הקבועים שלי</button>
+      <span id="modeNote" class="modenote"></span>
+    </div>
+    <div id="favPanel" class="favpanel" hidden></div>
+    <div id="tablewrap">
+    <div class="thead" id="thead"></div>
+    <div id="rows"></div>
+    <div class="totals" id="totals" hidden></div>
+    </div>
+    <p class="empty" id="empty" hidden>הסל ריק — חפשו מוצר או לחצו על אחת ההצעות למעלה.</p>
+    <div class="metrics" id="metrics" hidden></div>
+  </div>
+
+  <footer>
+    <p id="storesLine"></p>
+    <p>המחירים הם מחירי מדף ללא מבצעי מועדון, מתוך קבצי שקיפות המחירים שכל רשת מחויבת לפרסם לפי חוק קידום התחרות בענף המזון. ההשוואה בכל אזור מבוססת על סניף מייצג אחד לכל רשת; חצי חינם מפרסמת מחיר אחיד ארצי. היסטוריית מחירים נאספת מיום ההשקה.</p>
+  </footer>
+</div>
+<div id="pcard" class="pcard" hidden>
+  <div class="pcbox" role="dialog" aria-modal="true">
+    <button class="pcclose" id="pcClose" aria-label="סגירה">✕</button>
+    <div id="pcBody"></div>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js?b=20"></script>
+</body>
+</html>
