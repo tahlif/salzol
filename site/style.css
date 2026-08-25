@@ -298,3 +298,4 @@ footer a { color: var(--text-2); }
   font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center;
 }
 .pczoom:hover { color: var(--accent); border-color: var(--accent); }
+.rowchg { font-size: 13px; margin-inline-start: 2px; flex: none; }

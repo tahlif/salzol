@@ -597,14 +597,27 @@
         const arrow = chg ? `<i class="chg ${chg}" data-tip="${chgTip}">${chg === 'cup' ? '▲' : '▼'}</i>` : '';
         return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}</div>`;
       }).join('');
+      // אינדיקטור שינוי צמוד לשם - נראה גם כשעמודת הרשת גלולה מחוץ למסך (מובייל)
+      let rowChg = '';
+      {
+        let latest = null;
+        cols.forEach((c, i) => {
+          const h = colRecs[i] && colRecs[i].history[c.chain];
+          if (h && h.length >= 2 && (!latest || h[h.length - 1][0] > latest.at)) {
+            latest = { at: h[h.length - 1][0], up: h[h.length - 1][1] > h[h.length - 2][1], chain: c.label, from: h[h.length - 2][1], to: h[h.length - 1][1] };
+          }
+        });
+        if (latest) rowChg = `<i class="chg ${latest.up ? 'cup' : 'cdown'} rowchg" data-tip="${latest.chain}: ${latest.up ? 'התייקר' : 'הוזל'} מ-${fmt(latest.from)} ל-${fmt(latest.to)} · ${fmtDT(latest.at)}">${latest.up ? '▲' : '▼'}</i>`;
+      }
       rows.push(`<div class="rowwrap"><div class="row" data-code="${code}">
-        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}${full ? '' : ' *'}</span></div>
+        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}${full ? '' : ' *'}</span>${rowChg}</div>
         <div class="prices-m">${cells}</div>
         <button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button>
       </div></div>`);
     });
 
     $('rows').innerHTML = rows.join('');
+    $('tablewrap').scrollLeft = 0; // RTL: מתחילים תמיד מעמודת המוצר, לא מהקצה השמאלי
     $('empty').hidden = basket.length > 0;
 
     const totalsEl = $('totals');
@@ -701,9 +714,20 @@
     const noneHere = have.length === 0 && Object.keys(avail).length > 0;
 
     $('pcBody').innerHTML = `
+      ${(() => {
+        // תג שינוי אחרון בראש הקארד - נראה מיד, בלי לגלול להיסטוריה
+        let latest = null;
+        for (const { label, h } of histSrc) {
+          if (h && h.length >= 2 && (!latest || h[h.length - 1][0] > latest.at)) {
+            latest = { at: h[h.length - 1][0], up: h[h.length - 1][1] > h[h.length - 2][1], label, from: h[h.length - 2][1], to: h[h.length - 1][1] };
+          }
+        }
+        window.__pcTopChg = latest ? `<span class="hbadge ${latest.up ? 'hup' : 'hdown'}" style="margin-top:4px;display:inline-block">${latest.up ? '▲ התייקר' : '▼ הוזל'} ב${latest.label}: ${fmt(latest.from)} ← ${fmt(latest.to)} · ${fmtDT(latest.at)}</span>` : '';
+        return '';
+      })()}
       <div class="pchead">
         <span class="pcimgwrap"><span class="pcimg thumb" data-code="${code}"></span><button class="pczoom" aria-label="הגדלת תמונה">＋</button></span>
-        <h3>${name || 'מוצר'}</h3>
+        <div><h3>${name || 'מוצר'}</h3>${window.__pcTopChg}</div>
       </div>
       ${noneHere ? `<p class="pcnote">המוצר לא נמכר ב${useFav() ? 'סניפים שבחרת' : 'אזור הנוכחי'} — הנה איפה כן:</p>` : ''}
       ${have.length ? `<div class="pcprices">${priceRows}</div>` : ''}
