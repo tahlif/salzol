@@ -15,23 +15,7 @@
   --radius: 8px;
   --radius-lg: 14px;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1a1a19;
-    --surface: #232322;
-    --surface-2: #2c2c2a;
-    --text: #f0efec;
-    --text-2: #b5b4ac;
-    --text-3: #8f8e87;
-    --border: rgba(255, 255, 255, 0.1);
-    --border-strong: rgba(255, 255, 255, 0.2);
-    --good-bg: #085041;
-    --good-text: #9fe1cb;
-    --good-border: #0f6e56;
-    --accent: #5dcaa5;
-    --danger: #f0997b;
-  }
-}
+/* האתר תמיד בהיר - מצב כהה של המכשיר לא משנה את המראה (הוסר לבקשת המשתמש) */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
