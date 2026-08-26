@@ -341,3 +341,4 @@ footer a { color: var(--text-2); }
 .locbar .linkbtn { margin: 0; }
 #mapSection { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-top: 8px; }
 #mapSection .cityrow { margin-top: 0; }
+.staremark { color: var(--text-3); cursor: help; flex: none; font-weight: 600; }

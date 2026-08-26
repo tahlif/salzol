@@ -624,7 +624,7 @@
         if (latest) rowChg = `<i class="chg ${latest.up ? 'cup' : 'cdown'} rowchg" data-tip="${latest.chain}: ${latest.up ? 'התייקר' : 'הוזל'} מ-${fmt(latest.from)} ל-${fmt(latest.to)} · ${fmtDT(latest.at)}">${latest.up ? '▲' : '▼'}</i>`;
       }
       rows.push(`<div class="rowwrap"><div class="row" data-code="${code}">
-        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}${full ? '' : ' *'}</span>${rowChg}</div>
+        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}${rowChg}</div>
         <div class="prices-m">${cells}</div>
         <button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button>
       </div></div>`);
@@ -689,7 +689,7 @@
       recByDist[dm.id] = rec;
       if (!name) name = rec.name;
       if (rec.name) nameMap[code] = rec.name;
-      for (const ch of Object.keys(rec.prices)) (avail[ch] = avail[ch] || []).push(dm.he);
+      for (const [ch, pr] of Object.entries(rec.prices)) (avail[ch] = avail[ch] || []).push({ he: dm.he, p: pr.p });
     }
     const colRecs = cols.map((c) => recByDist[c.dist]);
     const prices = cols.map((c, i) => (colRecs[i] && colRecs[i].prices[c.chain] ? colRecs[i].prices[c.chain].p : null));
@@ -728,8 +728,13 @@
       return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}</b>${histLine(e.h)}</div>`;
     }).join('');
     const availHtml = Object.keys(avail).length
-      ? Object.keys(avail).sort((a, b) => avail[b].length - avail[a].length).map((ch) =>
-          `<div class="pcavail"><b>${chainName[ch] || ch}</b> — ${[...new Set(avail[ch])].join(', ')}</div>`).join('')
+      ? Object.keys(avail).sort((a, b) => avail[b].length - avail[a].length).map((ch) => {
+          // אזור + המחיר שם - שלא יישאר "נמכר בסופר ספיר" בלי לדעת בכמה
+          const seen = new Set();
+          const parts = avail[ch].filter((e) => !seen.has(e.he) && seen.add(e.he))
+            .map((e) => `${e.he} ${fmt(e.p)}`).join(' · ');
+          return `<div class="pcavail"><b>${chainName[ch] || ch}</b> — ${parts}</div>`;
+        }).join('')
       : '<div class="pcavail">לא נמצא באף אזור</div>';
     const noneHere = have.length === 0 && Object.keys(avail).length > 0;
 
