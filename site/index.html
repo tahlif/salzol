@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?b=29">
+<link rel="stylesheet" href="style.css?b=30">
 </head>
 <body>
 <header class="siteheader">
@@ -52,6 +52,7 @@
       <span id="modeNote" class="modenote"></span>
     </div>
     <div id="favPanel" class="favpanel" hidden></div>
+    <div class="sortbar"><button class="linkbtn" id="sortUnit" data-tip="ממיין את הסל מהמוצר הזול ביותר ל־100 גרם/מ&quot;ל ליקר">↕ מיון לפי מחיר ליחידה</button></div>
     <div id="tablewrap">
     <div class="thead" id="thead"></div>
     <div id="rows"></div>
@@ -61,6 +62,11 @@
     <div class="metrics" id="metrics" hidden></div>
   </div>
 
+  <div class="card" id="shrinkCard" hidden>
+    <h2 class="shrinktitle">📉 מכווצים לכם את האריזה</h2>
+    <p class="shrinknote">מוצרים שהאריזה שלהם קטנה לאחרונה — בדקו אם המחיר נשאר אותו מחיר. לחיצה פותחת את כרטיס המוצר.</p>
+    <div id="shrinkList"></div>
+  </div>
 
 </div>
 <footer class="sitefooter">
@@ -86,6 +92,6 @@
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?b=29"></script>
+<script src="app.js?b=30"></script>
 </body>
 </html>

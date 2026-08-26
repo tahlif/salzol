@@ -2,6 +2,30 @@
   const $ = (id) => document.getElementById(id);
   const fmt = (v) => '₪' + v.toFixed(2);
 
+  // ---------- מחיר ליחידה (rec.u = [כמות, סוג] מנורמל מה-build) ----------
+  const UNIT_BASE = { g: [100, "100 ג'"], ml: [100, '100 מ"ל'], unit: [1, "יח'"], m: [1, 'מטר'] };
+  function unitPrice(p, u) {
+    if (p == null || !u) return null;
+    const [q, k] = u, def = UNIT_BASE[k];
+    if (!def || !q) return null;
+    if (k === 'unit' && q <= 1) return null; // מחיר ליחידה כשיש יחידה אחת = המחיר עצמו
+    return { v: (p / q) * def[0], lbl: def[1], k };
+  }
+  const fmtU = (up) => `₪${up.v >= 100 ? up.v.toFixed(0) : up.v.toFixed(2)} ל־${up.lbl}`;
+  const fmtUShort = (up) => `${up.v >= 100 ? up.v.toFixed(0) : up.v.toFixed(2)}/${up.lbl.replace(/\s/g, '')}`;
+  function fmtPkg(u) {
+    if (!u) return '';
+    const [q, k] = u;
+    if (k === 'g') return q >= 1000 ? +(q / 1000).toFixed(2) + ' ק"ג' : +q.toFixed(1) + ' גרם';
+    if (k === 'ml') return q >= 1000 ? +(q / 1000).toFixed(2) + ' ליטר' : +q.toFixed(0) + ' מ"ל';
+    if (k === 'unit') return q > 1 ? +q.toFixed(0) + " יח'" : '';
+    return q + ' מטר';
+  }
+  const UNIT_HE = { g: 'גרם', ml: 'מ"ל', unit: "יח'", m: 'מטר' };
+  const flagOf = (cc) => (cc && /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0))) : '');
+  const COUNTRY_NAME = { IL: 'ישראל', CN: 'סין', TR: 'טורקיה', IT: 'איטליה', ES: 'ספרד', DE: 'גרמניה', PL: 'פולין', FR: 'צרפת', US: 'ארה"ב', NL: 'הולנד', BE: 'בלגיה', CH: 'שוויץ', GR: 'יוון', GB: 'בריטניה', UA: 'אוקראינה', IN: 'הודו', TH: 'תאילנד', BR: 'ברזיל', AR: 'ארגנטינה', DK: 'דנמרק', SE: 'שוודיה', AT: 'אוסטריה', CZ: "צ'כיה", RO: 'רומניה', BG: 'בולגריה', LT: 'ליטא', LV: 'לטביה', PT: 'פורטוגל', IE: 'אירלנד', CA: 'קנדה', NO: 'נורווגיה', FI: 'פינלנד', EC: 'אקוודור', KR: 'קוריאה', JP: 'יפן', ZA: 'דרום אפריקה', CY: 'קפריסין', HU: 'הונגריה', VN: 'וייטנאם', LK: 'סרי לנקה', MX: 'מקסיקו', ID: 'אינדונזיה', PH: 'פיליפינים', MY: 'מלזיה', AE: 'האמירויות', JO: 'ירדן', EG: 'מצרים', SK: 'סלובקיה', SI: 'סלובניה', HR: 'קרואטיה', PE: 'פרו', CL: "צ'ילה", CO: 'קולומביה', ET: 'אתיופיה' };
+  const flagHtml = (mc) => (mc && flagOf(mc) ? `<span class="rowflag" data-tip="תוצרת ${COUNTRY_NAME[mc] || mc}">${flagOf(mc)}</span>` : '');
+
   const [meta, chainsAll, sample, storesAll, cbsCities] = await Promise.all([
     fetch('data/meta.json').then((r) => r.json()),
     fetch('data/chains.json').then((r) => r.json()),
@@ -35,6 +59,7 @@
   try { favs = JSON.parse(localStorage.getItem('zulik-favs2')) || []; } catch {}
   let basket = [];
   try { basket = JSON.parse(localStorage.getItem('zulik-basket')) || []; } catch {}
+  let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
   // שמות מוצרים שנשמרים בין אזורים - כדי ששורת "לא נמכר כאן" תציג שם אמיתי
   let nameMap = {};
   try { nameMap = JSON.parse(localStorage.getItem('zulik-names')) || {}; } catch {}
@@ -332,9 +357,10 @@
   let matches = [];
   function renderSuggest() {
     if (!matches.length) { sugEl.hidden = true; sugEl.innerHTML = ''; return; }
-    sugEl.innerHTML = matches.map((e, i) =>
-      `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.n}</span></span><span class="chains">${e.ch.length} רשתות</span></button>`
-    ).join('');
+    sugEl.innerHTML = matches.map((e, i) => {
+      const meta = [e.b, fmtPkg(e.u), e.il ? '🇮🇱' : ''].filter(Boolean).join(' · ');
+      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.ch.length} רשתות</span></button>`;
+    }).join('');
     sugEl.hidden = false;
     hydrateSuggestImages();
   }
@@ -353,14 +379,17 @@
       if (cur && url) cur.style.backgroundImage = `url("${url}")`;
     }));
   }
+  let ilOnly = localStorage.getItem('zulik-ilonly') === '1';
   searchEl.addEventListener('input', () => {
     const q = norm(searchEl.value);
     active = -1;
     if (q.length < 2) { matches = []; renderSuggest(); return; }
     const toks = q.split(' ');
+    // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
     matches = index
-      .filter((e) => { const n = norm(e.n); return toks.every((t) => n.includes(t)); })
-      .sort((a, b) => (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
+      .filter((e) => !ilOnly || e.il)
+      .filter((e) => { const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
+      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
       .slice(0, 12);
     renderSuggest();
   });
@@ -386,11 +415,21 @@
 
   // ---------- צ'יפים לדוגמה ----------
   function renderSampleChips() {
-    $('sampleChips').innerHTML = sample.filter((c) => byCode.has(c)).map((c) =>
-      `<button class="chip" data-code="${c}">+ ${byCode.get(c).n.slice(0, 22)}</button>`
-    ).join('');
+    $('sampleChips').innerHTML =
+      `<button class="chip ${ilOnly ? 'sel' : ''}" id="ilOnly" data-tip="מסנן את תוצאות החיפוש למוצרים המיוצרים בישראל">🇮🇱 כחול-לבן</button>` +
+      sample.filter((c) => byCode.has(c)).map((c) =>
+        `<button class="chip" data-code="${c}">+ ${byCode.get(c).n.slice(0, 22)}</button>`
+      ).join('');
   }
   $('sampleChips').addEventListener('click', (ev) => {
+    const il = ev.target.closest('#ilOnly');
+    if (il) {
+      ilOnly = !ilOnly;
+      localStorage.setItem('zulik-ilonly', ilOnly ? '1' : '0');
+      il.classList.toggle('sel', ilOnly);
+      if (searchEl.value.trim().length >= 2) searchEl.dispatchEvent(new Event('input'));
+      return;
+    }
     const b = ev.target.closest('button[data-code]');
     if (b) add(b.dataset.code);
   });
@@ -453,6 +492,12 @@
   }
   $('tabRegion').addEventListener('click', () => setMode('region'));
   $('tabFav').addEventListener('click', () => setMode('fav'));
+  $('sortUnit').addEventListener('click', async () => {
+    sortByUnit = !sortByUnit;
+    $('sortUnit').classList.toggle('sel', sortByUnit);
+    $('sortUnit').textContent = sortByUnit ? '↩ חזרה לסדר שהוספתם' : '↕ מיון לפי מחיר ליחידה';
+    await render();
+  });
   $('favPanel').addEventListener('click', async (ev) => {
     const b = ev.target.closest('[data-fav]');
     if (b) await toggleFav(b.dataset.fav);
@@ -575,9 +620,10 @@
     for (const dist of dists) {
       recsByDist[dist] = await Promise.all(basket.map((code) => loadProductIn(dist, code)));
     }
-    const rows = [];
+    const rows = []; // {html, key} - key = מחיר-ליחידה מינימלי, למיון "הזול ליחידה"
     const totals = cols.map(() => 0);
     let comparable = 0;
+    const KIND_ORDER = { g: 0, ml: 1e4, unit: 2e4, m: 3e4 }; // אין השוואה בין גרם למ"ל - קבוצות נפרדות במיון
 
     basket.forEach((code, bi) => {
       const colRecs = cols.map((c) => recsByDist[c.dist][bi]);
@@ -587,9 +633,9 @@
       if (!anyRec) {
         // המוצר לא נמכר בסניפים/אזור הנוכחיים - שומרים את השם, והקליק פותח קארד שמראה איפה כן
         const nm = nameMap[code] || 'מוצר מהסל';
-        rows.push(`<div class="rowwrap"><div class="row" data-code="${code}">
+        rows.push({ key: Infinity, html: `<div class="rowwrap"><div class="row" data-code="${code}">
           <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${nm}</span> <span class="notherepill" data-tip="לא נמכר כאן - לחצו לראות איפה כן">לא נמכר כאן</span></div>
-          <div class="prices-m"></div><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></div></div>`);
+          <div class="prices-m"></div><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></div></div>` });
         return;
       }
       const prices = cols.map((c, i) => {
@@ -600,6 +646,7 @@
       const full = have.length === cols.length;
       if (full) { comparable++; prices.forEach((p, i) => { totals[i] += p; }); }
       const best = Math.min(...have);
+      const bestUp = unitPrice(best, anyRec.u);
       const cells = cols.map((c, i) => {
         const p = prices[i];
         if (p === null) return `<div class="price missing" data-chain="${c.label}">—</div>`;
@@ -609,16 +656,22 @@
         const chgDate = chg ? h[h.length - 1][0] : null;
         const chgTip = chg ? `${chg === 'cup' ? 'התייקר' : 'הוזל'} מ-${fmt(h[h.length - 2][1])} ב-${fmtD(chgDate)}${chgDate === meta.updated && upTime ? ' בשעה ' + upTime : ''}` : '';
         const arrow = chg ? `<i class="chg ${chg}" data-tip="${chgTip}">${chg === 'cup' ? '▲' : '▼'}</i>` : '';
-        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}</div>`;
+        const up = unitPrice(p, colRecs[i] && colRecs[i].u);
+        const uline = up ? `<small class="unitp">${fmtUShort(up)}</small>` : '';
+        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}${uline}</div>`;
       }).join('');
-      rows.push(`<div class="rowwrap"><div class="row" data-code="${code}">
-        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
+      const pkg = fmtPkg(anyRec.u);
+      rows.push({
+        key: bestUp ? KIND_ORDER[bestUp.k] + bestUp.v : Infinity,
+        html: `<div class="rowwrap"><div class="row" data-code="${code}">
+        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${pkg ? `<span class="pkg">${pkg}</span>` : ''}${flagHtml(anyRec.mc)}${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
         <div class="prices-m">${cells}</div>
         <button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button>
-      </div></div>`);
+      </div></div>` });
     });
 
-    $('rows').innerHTML = rows.join('');
+    if (sortByUnit) rows.sort((a, b) => a.key - b.key);
+    $('rows').innerHTML = rows.map((r) => r.html).join('');
     $('tablewrap').scrollLeft = 0; // RTL: מתחילים תמיד מעמודת המוצר, לא מהקצה השמאלי
     $('empty').hidden = basket.length > 0;
 
@@ -685,7 +738,8 @@
     const best = have.length ? Math.min(...have) : null;
     // רשימה מאוחדת: מחיר + היסטוריה בשורה אחת לכל רשת, ממוינת מהזול ליקר
     const histOf = (i, chain) => (colRecs[i] && colRecs[i].history[chain]) || null;
-    const entries = cols.map((c, i) => ({ label: c.label, p: prices[i], h: histOf(i, c.chain) }));
+    const tOf = (i, chain) => (colRecs[i] && colRecs[i].prices[chain] && colRecs[i].prices[chain].t) || null;
+    const entries = cols.map((c, i) => ({ label: c.label, p: prices[i], h: histOf(i, c.chain), t: tOf(i, c.chain) }));
     if (!useFav()) {
       // רשתות שיש להן היסטוריה באזור אבל נשרו מהעמודות היום - מוצגות עם המחיר האחרון הידוע
       const rec = recByDist[district];
@@ -697,23 +751,28 @@
     }
     entries.sort((a, b) => (a.p ?? a.lastP ?? 1e9) - (b.p ?? b.lastP ?? 1e9));
     const histSrc = entries.map((e) => ({ label: e.label, h: e.h }));
-    const histLine = (h) => {
-      if (!h || !h.length) return '';
+    // t = PriceUpdateTime של הרשת עצמה - "בתוקף מאז" מדויק גם כשההיסטוריה שלנו צעירה
+    const histLine = (h, t) => {
+      if (!h || !h.length) return t ? `<span class="phist stabletxt">בתוקף מאז ${fmtD(t)}</span>` : '';
       const first = h[0], last = h[h.length - 1];
       const stable = h.length === 1 || first[1] === last[1];
       if (stable) {
-        if (h.length === 1 && first[0] >= meta.updated) return '';
-        return `<span class="phist stabletxt">יציב מאז ${fmtD(first[0])}</span>`;
+        const since = t && t < first[0] ? t : first[0];
+        if (h.length === 1 && first[0] >= meta.updated && !t) return '';
+        return `<span class="phist stabletxt">${t && t < first[0] ? 'בתוקף' : 'יציב'} מאז ${fmtD(since)}</span>`;
       }
       const up = last[1] > first[1];
       const pct = first[1] ? Math.round((Math.abs(last[1] - first[1]) / first[1]) * 100) : 0;
       return `<div class="phist">${spark(h, up, true)}<span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}% · מ־${fmt(first[1])}</span></div>`;
     };
+    const cardRec = recByDist[district] || colRecs.find(Boolean) || Object.values(recByDist)[0];
+    const cardU = cardRec && cardRec.u;
     const priceRows = entries.map((e) => {
       const priceHtml = e.p !== null
         ? (e.p === best && have.length > 1 ? `<span class="bestpill">${fmt(e.p)}</span>` : fmt(e.p))
         : (e.lastP != null ? `<span class="ghostprice" data-tip="הרשת לא בהשוואה היום - מחיר אחרון ידוע">${fmt(e.lastP)}*</span>` : '—');
-      return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}</b>${histLine(e.h)}</div>`;
+      const up = unitPrice(e.p != null ? e.p : e.lastP, cardU);
+      return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}${up ? `<small class="unitp pcunitp">${fmtU(up)}</small>` : ''}</b>${histLine(e.h, e.t)}</div>`;
     }).join('');
     const availHtml = Object.keys(avail).length
       ? Object.keys(avail).sort((a, b) => avail[b].length - avail[a].length).map((ch) => {
@@ -740,7 +799,23 @@
       })()}
       <div class="pchead">
         <span class="pcimgwrap"><span class="pcimg thumb" data-code="${code}"></span><button class="pczoom" aria-label="הגדלת תמונה">＋</button></span>
-        <div><h3>${name || 'מוצר'}</h3>${window.__pcTopChg}</div>
+        <div><h3>${name || 'מוצר'}</h3>${(() => {
+          // שורת מטא: גודל אריזה · מחיר ליחידה (מהזול) · מותג · ארץ ייצור
+          const bits = [];
+          const pkg = fmtPkg(cardU);
+          if (pkg) bits.push(pkg);
+          if (best != null) { const up = unitPrice(best, cardU); if (up) bits.push(fmtU(up)); }
+          if (cardRec && cardRec.mf) bits.push(cardRec.mf);
+          if (cardRec && cardRec.mc && flagOf(cardRec.mc)) bits.push(`${flagOf(cardRec.mc)} ${COUNTRY_NAME[cardRec.mc] || cardRec.mc}`);
+          const meta1 = bits.length ? `<p class="pcmeta">${bits.join(' · ')}</p>` : '';
+          // שרינקפלציה: האריזה התכווצה (qh = היסטוריית כמויות מה-build)
+          let shrink = '';
+          if (cardRec && cardRec.qh && cardRec.qh.length >= 2) {
+            const q0 = cardRec.qh[cardRec.qh.length - 2][1], q1 = cardRec.qh[cardRec.qh.length - 1][1];
+            if (q1 < q0) shrink = `<span class="hbadge hup" style="display:inline-block;margin-top:4px">📉 האריזה התכווצה: ${q0} ← ${q1} ${UNIT_HE[cardU ? cardU[1] : 'g'] || ''} (${fmtD(cardRec.qh[cardRec.qh.length - 1][0])})</span>`;
+          }
+          return meta1 + shrink;
+        })()}${window.__pcTopChg}</div>
       </div>
       ${noneHere ? `<p class="pcnote">המוצר לא נמכר ב${useFav() ? 'סניפים שבחרת' : 'אזור הנוכחי'} — הנה איפה כן:</p>` : ''}
       ${entries.length ? `<div class="pcprices">${priceRows}</div>` : ''}
@@ -834,6 +909,21 @@
     if (th && thumbUrl(th)) { openImgZoom(thumbUrl(th)); return; }
     const row = ev.target.closest('.row[data-code]');
     if (row) await openProductCard(row.dataset.code);
+  });
+
+  // ---------- מכווצים לכם את האריזה (shrink.json נצבר ב-build לאורך זמן) ----------
+  fetch('data/shrink.json').then((r) => (r.ok ? r.json() : [])).catch(() => []).then((list) => {
+    if (!Array.isArray(list) || !list.length) return;
+    $('shrinkCard').hidden = false;
+    $('shrinkList').innerHTML = list.slice(0, 12).map((e) => {
+      const pct = e.q0 ? Math.round((1 - e.q1 / e.q0) * 100) : 0;
+      return `<button class="shrinkrow" data-code="${e.c}"><span class="thumb" data-code="${e.c}"></span><span class="shrinktxt"><b>${e.n}</b><small>${e.q0} ← ${e.q1} ${UNIT_HE[e.k] || ''} · פחות ${pct}% באריזה · ${fmtD(e.d)}</small></span></button>`;
+    }).join('');
+    hydrateImages();
+  });
+  $('shrinkList').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('[data-code]');
+    if (b) await openProductCard(b.dataset.code);
   });
 
   await loadDistrict();
