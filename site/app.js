@@ -611,20 +611,8 @@
         const arrow = chg ? `<i class="chg ${chg}" data-tip="${chgTip}">${chg === 'cup' ? '▲' : '▼'}</i>` : '';
         return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}</div>`;
       }).join('');
-      // אינדיקטור שינוי צמוד לשם - נראה גם כשעמודת הרשת גלולה מחוץ למסך (מובייל)
-      let rowChg = '';
-      {
-        let latest = null;
-        cols.forEach((c, i) => {
-          const h = colRecs[i] && colRecs[i].history[c.chain];
-          if (h && h.length >= 2 && (!latest || h[h.length - 1][0] > latest.at)) {
-            latest = { at: h[h.length - 1][0], up: h[h.length - 1][1] > h[h.length - 2][1], chain: c.label, from: h[h.length - 2][1], to: h[h.length - 1][1] };
-          }
-        });
-        if (latest) rowChg = `<i class="chg ${latest.up ? 'cup' : 'cdown'} rowchg" data-tip="${latest.chain}: ${latest.up ? 'התייקר' : 'הוזל'} מ-${fmt(latest.from)} ל-${fmt(latest.to)} · ${fmtDT(latest.at)}">${latest.up ? '▲' : '▼'}</i>`;
-      }
       rows.push(`<div class="rowwrap"><div class="row" data-code="${code}">
-        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}${rowChg}</div>
+        <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
         <div class="prices-m">${cells}</div>
         <button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button>
       </div></div>`);
