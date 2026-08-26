@@ -10,6 +10,7 @@ const BRANCHES_FILE = path.join(__dirname, 'branches.json');
 fs.mkdirSync(DATA, { recursive: true });
 
 const CHAINS = require('./chains-list').map(({ id, name }) => ({ id, name }));
+const CHAIN_SET = new Set(CHAINS.map((c) => c.id));
 
 const today = new Date().toISOString().slice(0, 10);
 const now=new Date(); const stamp = today + 'T' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
@@ -195,6 +196,7 @@ for (const d of DISTRICTS) {
     const rec = shard[code] || { prices: {}, history: {} };
     rec.name = globalName.get(code) || rec.name || code; // שם קנוני אחיד בכל הארץ
     rec.prices = {};
+    for (const k of Object.keys(rec.history)) if (!CHAIN_SET.has(k)) delete rec.history[k]; // רשתות שהוסרו (דור אלון) לא נגררות
     for (const id of chainIds) {
       const it = parsed[id].get(code);
       if (!it) continue;

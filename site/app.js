@@ -680,8 +680,8 @@
       // רשתות שיש להן היסטוריה באזור אבל נשרו מהעמודות היום - מוצגות עם המחיר האחרון הידוע
       const rec = recByDist[district];
       if (rec) for (const [ch, h] of Object.entries(rec.history || {})) {
-        if (!cols.some((c) => c.chain === ch) && h.length) {
-          entries.push({ label: chainName[ch] || ch, p: null, lastP: h[h.length - 1][1], h, ghost: true });
+        if (chainName[ch] && !cols.some((c) => c.chain === ch) && h.length) { // רק רשתות פעילות
+          entries.push({ label: chainName[ch], p: null, lastP: h[h.length - 1][1], h, ghost: true });
         }
       }
     }

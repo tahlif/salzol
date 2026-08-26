@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?b=24">
+<link rel="stylesheet" href="style.css?b=25">
 </head>
 <body>
 <header class="siteheader">
@@ -21,30 +21,13 @@
 <div class="wrap">
   <p class="tagline">כמה באמת עולה הסל שלך בכל רשת, באזור שלך — מהמחירים הרשמיים שהרשתות מחויבות לפרסם בחוק.</p>
 
-  <div class="card mapcard">
-    <p class="maptitle">איפה אתם קונים?</p>
-    <div class="cityrow">
-      <input id="cityFilter" list="cityList" placeholder="בחרו יישוב — כל יישובי ישראל ברשימה…" autocomplete="off" aria-label="בחירת יישוב">
-      <datalist id="cityList"></datalist>
-      <button class="chip" id="cityClear" hidden>ניקוי ✕</button>
-    </div>
-    <div class="chips" id="popularChips" role="group" aria-label="ערים נפוצות"></div>
-    <div id="realmap" aria-label="מפת סניפים"></div>
-    <div class="legend" id="mapLegend"></div>
-    <button class="linkbtn" id="branchesToggle" hidden>כל הסניפים באזור</button>
-    <div id="branchList" class="branches" hidden></div>
-  </div>
-
-  <div class="card">
+  <div class="card" id="basketCard">
     <div class="searchbox">
       <input id="search" type="search" placeholder="חפשו מוצר… קוטג', במבה, שמן זית" autocomplete="off" enterkeyhint="search" aria-label="חיפוש מוצר">
       <svg class="sicon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <div class="suggest" id="suggest" hidden></div>
     </div>
     <div class="chips" id="sampleChips"></div>
-  </div>
-
-  <div class="card" id="basketCard">
     <div class="tabbar" role="tablist">
       <button class="tab" id="tabRegion" role="tab">השוואה לפי אזור</button>
       <button class="tab" id="tabFav" role="tab">⭐ הסניפים הקבועים שלי</button>
@@ -60,13 +43,35 @@
     <div class="metrics" id="metrics" hidden></div>
   </div>
 
+  <div class="card mapcard">
+    <p class="maptitle">איפה אתם קונים?</p>
+    <div class="cityrow">
+      <input id="cityFilter" list="cityList" placeholder="בחרו יישוב — כל יישובי ישראל ברשימה…" autocomplete="off" aria-label="בחירת יישוב">
+      <datalist id="cityList"></datalist>
+      <button class="chip" id="cityClear" hidden>ניקוי ✕</button>
+    </div>
+    <div class="chips" id="popularChips" role="group" aria-label="ערים נפוצות"></div>
+    <div id="realmap" aria-label="מפת סניפים"></div>
+    <div class="legend" id="mapLegend"></div>
+    <button class="linkbtn" id="branchesToggle" hidden>כל הסניפים באזור</button>
+    <div id="branchList" class="branches" hidden></div>
+  </div>
+
 </div>
 <footer class="sitefooter">
-  <div class="wrap ftr">
-    <div class="ftrbrand">סַלְזוֹל<span>.</span></div>
-    <p id="storesLine"></p>
-    <p class="ftrnote">מחירי מדף רשמיים מקבצי שקיפות המחירים (חוק קידום התחרות בענף המזון) · מתעדכן אוטומטית כל בוקר</p>
-    <p class="ftrnote">© 2026 כל הזכויות שמורות לסַלְזוֹל</p>
+  <div class="wrap ftr ftrcols">
+    <div class="ftrmain">
+      <div class="ftrbrand">סַלְזוֹל<span>.</span></div>
+      <p id="storesLine"></p>
+      <p class="ftrnote">מחירי מדף רשמיים מקבצי שקיפות המחירים (חוק קידום התחרות בענף המזון) · מתעדכן אוטומטית כל בוקר</p>
+    </div>
+    <div class="ftrlinks">
+      <a href="pages/contact.html">צור קשר</a>
+      <a href="pages/terms.html">תקנון שימוש</a>
+      <a href="pages/accessibility.html">הצהרת נגישות</a>
+      <a href="pages/privacy.html">מדיניות פרטיות</a>
+      <p class="ftrnote">© 2026 כל הזכויות שמורות לסַלְזוֹל</p>
+    </div>
   </div>
 </footer>
 <div id="pcard" class="pcard" hidden>
@@ -76,6 +81,6 @@
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?b=24"></script>
+<script src="app.js?b=25"></script>
 </body>
 </html>
