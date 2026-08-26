@@ -577,8 +577,25 @@
     imgInflight.delete(code);
     return r;
   }
+  // מפת התמונות שנבנית בלילה בשרת (data/img/<NN>.json): 'r'=רמי לוי, URL=Open Facts, 0=אין
+  const imgShardCache = {};
+  async function imgMapLookup(code) {
+    const sh = code.slice(-2).padStart(2, '0');
+    if (!(sh in imgShardCache)) {
+      imgShardCache[sh] = fetch(`data/img/${sh}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+    }
+    const m = await imgShardCache[sh];
+    return code in m ? m[code] : undefined;
+  }
   async function fetchImgInner(code) {
     const rl = `https://img.rami-levy.co.il/product/${code}/small.jpg`;
+    const mapped = await imgMapLookup(code);
+    if (mapped !== undefined) {
+      const url = mapped === 0 ? 0 : mapped === 'r' ? rl : mapped;
+      imgCache[code] = url;
+      localStorage.setItem('zulik-img-v2', JSON.stringify(imgCache));
+      return url;
+    }
     if (await probeImg(rl)) {
       imgCache[code] = rl;
       localStorage.setItem('zulik-img-v2', JSON.stringify(imgCache));
@@ -637,7 +654,9 @@
     // בקארד: התאריך (והשעה אם קיימת) כתוב בקטן מתחת לכל נקודה
     const labels = wide ? hist.map(([d], i) => {
       const [x] = xy(hist[i][1], i);
-      return `<text x="${x}" y="${H - 2}" text-anchor="middle" font-size="8.5" fill="var(--text-3)">${fmtDT(d)}</text>`;
+      // התווית של נקודות הקצה נחתכה בשולי ה-SVG - מהדקים אותה פנימה
+      const lx = Math.min(Math.max(parseFloat(x), 26), W - 26).toFixed(1);
+      return `<text x="${lx}" y="${H - 2}" text-anchor="middle" font-size="8.5" fill="var(--text-3)">${fmtDT(d)}</text>`;
     }).join('') : '';
     return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${labels}</svg>`;
   }

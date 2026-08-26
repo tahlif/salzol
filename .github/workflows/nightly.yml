@@ -42,6 +42,9 @@ jobs:
       - name: בנייה ועדכון שינויים
         run: node pipeline/build.js
 
+      - name: מפת תמונות מצטברת (Open Facts + רמי לוי, נתח לילי)
+        run: node pipeline/images.js
+
       - name: קומיט של הדאטה המעודכן
         run: |
           git config user.name "zolli-bot"
