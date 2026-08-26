@@ -418,3 +418,4 @@ footer a { color: var(--text-2); }
   box-shadow: 0 10px 28px rgba(0,0,0,.15); min-width: 240px; }
 .authpop .authtitle { margin: 0 0 10px; font-size: 13.5px; font-weight: 600; }
 .authpop small { display: block; margin-top: 10px; color: var(--text-3); font-size: 11.5px; }
+.sgfavall { background: #fdf3d8; border-radius: 999px; padding: 1px 8px; }

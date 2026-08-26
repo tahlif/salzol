@@ -453,7 +453,7 @@
         e.b, fmtPkg(e.u),
         mcFlag ? `${mcFlag} ${COUNTRY_NAME[e.mc] || ''}`.trim() : '',
       ].filter(Boolean).join(' · ');
-      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}</span><br>` : ''}${e.ch.length} רשתות</span></button>`;
+      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favAll ? `<span class="sgfav sgfavall">⭐ בכל המועדפים שלך</span><br>` : e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}${e.favIn.length > 1 ? ` +${e.favIn.length - 1}` : ''}</span><br>` : ''}${e.ch.length} רשתות</span></button>`;
     }).join('');
     sugEl.hidden = false;
     hydrateSuggestImages();
@@ -487,16 +487,17 @@
     active = -1;
     if (q.length < 2 && !anyFilter()) { matches = []; renderSuggest(); return; }
     const toks = q.length >= 2 ? q.split(' ') : [];
-    // סניפים מועדפים: מוצרים שקיימים ברשתות של הסניפים הקבועים שלך עולים ראשונים
+    // סניפים מועדפים: מוצר שקיים בכל הסניפים המועדפים - ראשון בעדיפות; אחריו לפי כמות כיסוי
     const favChains = new Set(favs.map((k) => (branchByKey.get(k) || {}).chain).filter(Boolean));
-    const inFav = (e) => (favChains.size ? e.ch.some((c) => favChains.has(c)) : false);
+    const favCount = (e) => (favChains.size ? e.ch.filter((c) => favChains.has(c)).length : 0);
+    const allFav = (e) => favChains.size > 0 && [...favChains].every((c) => e.ch.includes(c));
     // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
     matches = index
       .filter(passFilters)
       .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
-      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (inFav(b) - inFav(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
+      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (allFav(b) - allFav(a)) || (favCount(b) - favCount(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
       .slice(0, 12)
-      .map((e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [] }));
+      .map((e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [], favAll: allFav(e) }));
     renderSuggest();
   }
   searchEl.addEventListener('input', computeMatches);
