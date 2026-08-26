@@ -673,36 +673,38 @@
     const prices = cols.map((c, i) => (colRecs[i] && colRecs[i].prices[c.chain] ? colRecs[i].prices[c.chain].p : null));
     const have = prices.filter((p) => p !== null);
     const best = have.length ? Math.min(...have) : null;
-    const priceRows = cols.map((c, i) => {
-      const p = prices[i];
-      return `<div class="pcprice"><span>${c.label}</span><b>${p === null ? '—' : (p === best && have.length > 1 ? `<span class="bestpill">${fmt(p)}</span>` : fmt(p))}</b></div>`;
-    }).join('');
-    // היסטוריה: כל רשת שיש לה נתונים על המוצר באזור - גם אם אינה בעמודות היום
-    const histSrc = useFav()
-      ? cols.map((c, i) => ({ label: c.label, h: colRecs[i] && colRecs[i].history[c.chain] }))
-      : Object.entries(((recByDist[district] || {}).history) || {}).map(([ch, h]) => ({ label: chainName[ch] || ch, h }));
-    const histRows = histSrc.map(({ label, h }) => {
+    // רשימה מאוחדת: מחיר + היסטוריה בשורה אחת לכל רשת, ממוינת מהזול ליקר
+    const histOf = (i, chain) => (colRecs[i] && colRecs[i].history[chain]) || null;
+    const entries = cols.map((c, i) => ({ label: c.label, p: prices[i], h: histOf(i, c.chain) }));
+    if (!useFav()) {
+      // רשתות שיש להן היסטוריה באזור אבל נשרו מהעמודות היום - מוצגות עם המחיר האחרון הידוע
+      const rec = recByDist[district];
+      if (rec) for (const [ch, h] of Object.entries(rec.history || {})) {
+        if (!cols.some((c) => c.chain === ch) && h.length) {
+          entries.push({ label: chainName[ch] || ch, p: null, lastP: h[h.length - 1][1], h, ghost: true });
+        }
+      }
+    }
+    entries.sort((a, b) => (a.p ?? a.lastP ?? 1e9) - (b.p ?? b.lastP ?? 1e9));
+    const histSrc = entries.map((e) => ({ label: e.label, h: e.h }));
+    const histLine = (h) => {
       if (!h || !h.length) return '';
       const first = h[0], last = h[h.length - 1];
-      // נקודה אחת ישנה = המחיר יציב מאז - מציירים קו שטוח עד היום
       const stable = h.length === 1 || first[1] === last[1];
-      if (h.length === 1) {
-        if (first[0] >= meta.updated) return '';
-        h = [first, [meta.updated, first[1]]];
+      if (stable) {
+        if (h.length === 1 && first[0] >= meta.updated) return '';
+        return `<span class="phist stabletxt">יציב מאז ${fmtD(first[0])}</span>`;
       }
       const up = last[1] > first[1];
       const pct = first[1] ? Math.round((Math.abs(last[1] - first[1]) / first[1]) * 100) : 0;
-      // יציב = שורת טקסט בלבד, בלי גרף שטוח מיותר
-      if (stable) {
-        return `<div class="hrow"><span class="hchain">${label}</span><span class="hprices">${fmt(last[1])} · יציב מאז ${fmtD(first[0])}</span></div>`;
-      }
-      return `<div class="hrow">
-        <span class="hchain">${label}</span>
-        ${spark(h, up, true)}
-        <span class="hprices">מ־${fmt(first[1])} ל־${fmt(last[1])}</span>
-        <span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}%</span>
-      </div>`;
-    }).filter(Boolean).join('');
+      return `<div class="phist">${spark(h, up, true)}<span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}% · מ־${fmt(first[1])}</span></div>`;
+    };
+    const priceRows = entries.map((e) => {
+      const priceHtml = e.p !== null
+        ? (e.p === best && have.length > 1 ? `<span class="bestpill">${fmt(e.p)}</span>` : fmt(e.p))
+        : (e.lastP != null ? `<span class="ghostprice" data-tip="הרשת לא בהשוואה היום - מחיר אחרון ידוע">${fmt(e.lastP)}*</span>` : '—');
+      return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}</b>${histLine(e.h)}</div>`;
+    }).join('');
     const availHtml = Object.keys(avail).length
       ? Object.keys(avail).sort((a, b) => avail[b].length - avail[a].length).map((ch) =>
           `<div class="pcavail"><b>${chainName[ch] || ch}</b> — ${[...new Set(avail[ch])].join(', ')}</div>`).join('')
@@ -726,8 +728,7 @@
         <div><h3>${name || 'מוצר'}</h3>${window.__pcTopChg}</div>
       </div>
       ${noneHere ? `<p class="pcnote">המוצר לא נמכר ב${useFav() ? 'סניפים שבחרת' : 'אזור הנוכחי'} — הנה איפה כן:</p>` : ''}
-      ${have.length ? `<div class="pcprices">${priceRows}</div>` : ''}
-      ${histRows ? `<div class="pchist"><p class="pctitle">היסטוריית מחירים <small>(ריחוף על נקודה = תאריך השינוי)</small></p>${histRows}</div>` : '<p class="hnote">המחיר יציב מאז שהתחלנו לעקוב.</p>'}
+      ${entries.length ? `<div class="pcprices">${priceRows}</div>` : ''}
       <details class="pcdet"><summary>איפה המוצר נמכר</summary>${availHtml}</details>
       <p class="hnote">המחירים נכונים לעדכון האחרון: ${updatedLabel}</p>`;
     $('pcard').hidden = false;
