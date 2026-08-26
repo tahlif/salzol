@@ -49,7 +49,9 @@ jobs:
           git add site/data pipeline/geo.json pipeline/branches.json pipeline/osm-pois.json \
                   pipeline/city-geo.json pipeline/city-geo-google.json pipeline/top200.json pipeline/geo-report.txt
           git diff --cached --quiet || git commit -m "עדכון מחירים יומי $(date +%d.%m.%Y)"
-          git pull --rebase --autostash origin main   # חסינות מפני push מקביל + קבצי עזר לא-מוסטים
+          # חסינות מפני push מקביל; בקונפליקט בקבצים גנרטיביים -X theirs משאיר את
+          # הדאטה שנבנה כאן עכשיו (ברי-בייס theirs = הקומיט המקומי המוחזר)
+          git pull --rebase --autostash -X theirs origin main
           git push
 
       - name: פריסה ל-Cloudflare (push מתוך Action לא מפעיל workflow אחר - לכן פורסים כאן)
