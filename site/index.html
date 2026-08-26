@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?b=26">
+<link rel="stylesheet" href="style.css?b=27">
 </head>
 <body>
 <header class="siteheader">
@@ -28,6 +28,24 @@
       <div class="suggest" id="suggest" hidden></div>
     </div>
     <div class="chips" id="sampleChips"></div>
+
+    <div class="locbar">
+      <span class="locsum" id="locSummary">📍 טוען אזור…</span>
+      <button class="linkbtn" id="mapToggle">שינוי אזור במפה ▾</button>
+    </div>
+    <div id="mapSection" hidden>
+      <div class="cityrow">
+        <input id="cityFilter" list="cityList" placeholder="בחרו יישוב — כל יישובי ישראל ברשימה…" autocomplete="off" aria-label="בחירת יישוב">
+        <datalist id="cityList"></datalist>
+        <button class="chip" id="cityClear" hidden>ניקוי ✕</button>
+      </div>
+      <div class="chips" id="popularChips" role="group" aria-label="ערים נפוצות"></div>
+      <div id="realmap" aria-label="מפת סניפים"></div>
+      <div class="legend" id="mapLegend"></div>
+      <button class="linkbtn" id="branchesToggle" hidden>כל הסניפים באזור</button>
+      <div id="branchList" class="branches" hidden></div>
+    </div>
+
     <div class="tabbar" role="tablist">
       <button class="tab" id="tabRegion" role="tab">השוואה לפי אזור</button>
       <button class="tab" id="tabFav" role="tab">⭐ הסניפים הקבועים שלי</button>
@@ -43,19 +61,6 @@
     <div class="metrics" id="metrics" hidden></div>
   </div>
 
-  <div class="card mapcard">
-    <p class="maptitle">איפה אתם קונים?</p>
-    <div class="cityrow">
-      <input id="cityFilter" list="cityList" placeholder="בחרו יישוב — כל יישובי ישראל ברשימה…" autocomplete="off" aria-label="בחירת יישוב">
-      <datalist id="cityList"></datalist>
-      <button class="chip" id="cityClear" hidden>ניקוי ✕</button>
-    </div>
-    <div class="chips" id="popularChips" role="group" aria-label="ערים נפוצות"></div>
-    <div id="realmap" aria-label="מפת סניפים"></div>
-    <div class="legend" id="mapLegend"></div>
-    <button class="linkbtn" id="branchesToggle" hidden>כל הסניפים באזור</button>
-    <div id="branchList" class="branches" hidden></div>
-  </div>
 
 </div>
 <footer class="sitefooter">
@@ -81,6 +86,6 @@
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?b=26"></script>
+<script src="app.js?b=27"></script>
 </body>
 </html>

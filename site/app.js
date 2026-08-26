@@ -270,10 +270,31 @@
     await render();
   });
 
+  function updateLocSummary() {
+    const el = $('locSummary');
+    if (!el) return;
+    el.textContent = useFav()
+      ? `📍 משווים בין ${favCols().length} הסניפים הקבועים שלך`
+      : `📍 משווים באזור ${dMeta().he}${cityFilter ? ` · ${cityFilter}` : ''}`;
+  }
   function renderDistrictUI() {
+    updateLocSummary();
     setBranchesToggleText();
     renderBranchList();
   }
+  // המפה חיה בתוך מקטע מתקפל - Leaflet חייב חישוב-גודל מחדש אחרי פתיחה
+  $('mapToggle').addEventListener('click', () => {
+    const sec = $('mapSection');
+    sec.hidden = !sec.hidden;
+    $('mapToggle').textContent = sec.hidden ? 'שינוי אזור במפה ▾' : 'סגירת המפה ▴';
+    if (!sec.hidden) {
+      setTimeout(() => {
+        lmap.invalidateSize();
+        const mine = markers.filter((mk) => !cityFilter ? mk._branch.district === district : cityMatches(mk._branch, cityFilter));
+        fitTo(mine.length ? mine : markers);
+      }, 60);
+    }
+  });
   function setBranchesToggleText() {
     const all = storesAll[district] || {};
     const count = Object.values(all).reduce((n, arr) => n + arr.length, 0);
@@ -413,6 +434,7 @@
   }
   function updateModeUI() {
     const n = favCols().length;
+    updateLocSummary();
     $('tabRegion').classList.toggle('active', mode === 'region');
     $('tabFav').classList.toggle('active', mode === 'fav');
     $('modeNote').textContent = useFav()
