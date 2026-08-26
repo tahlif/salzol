@@ -398,3 +398,4 @@ footer a { color: var(--text-2); }
 .pcprice .phist { flex-wrap: wrap; }
 /* עמודות צרות: שם המוצר מקבל את כל הרוחב - בלי תג גודל ודגל בשורה (יש אותם בקארד) */
 .narrowcols .row .pkg, .narrowcols .row .rowflag { display: none; }
+.sgpromo { color: #b3552e; font-weight: 600; }

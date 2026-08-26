@@ -367,7 +367,12 @@
     if (!matches.length) { sugEl.hidden = true; sugEl.innerHTML = ''; return; }
     sugEl.innerHTML = matches.map((e, i) => {
       const mcFlag = flagImg(e.mc || (e.il ? 'IL' : ''));
-      const meta = [e.b, fmtPkg(e.u), mcFlag ? `${mcFlag} ${COUNTRY_NAME[e.mc] || ''}`.trim() : ''].filter(Boolean).join(' · ');
+      const meta = [
+        e.pm ? '<span class="sgpromo">🏷 במבצע</span>' : '',
+        e.dn ? '<span class="chgdown">▼ הוזל</span>' : '',
+        e.b, fmtPkg(e.u),
+        mcFlag ? `${mcFlag} ${COUNTRY_NAME[e.mc] || ''}`.trim() : '',
+      ].filter(Boolean).join(' · ');
       return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.ch.length} רשתות</span></button>`;
     }).join('');
     sugEl.hidden = false;
@@ -391,20 +396,27 @@
       else setThumbEmoji(cur, code);
     }));
   }
-  let ilOnly = localStorage.getItem('zulik-ilonly') === '1';
-  searchEl.addEventListener('input', () => {
+  // פילטרים לחיפוש: כחול-לבן / במבצע / הוזלו לאחרונה - ניתנים לשילוב;
+  // פילטר פעיל בלי טקסט חיפוש = מציג ישר את המוצרים המתאימים
+  let filters = { il: localStorage.getItem('zulik-ilonly') === '1', pm: false, dn: false };
+  const anyFilter = () => filters.il || filters.pm || filters.dn;
+  const passFilters = (e) =>
+    (!filters.il || e.il || e.mc === 'IL') && (!filters.pm || e.pm) && (!filters.dn || e.dn);
+  function computeMatches() {
     const q = norm(searchEl.value);
     active = -1;
-    if (q.length < 2) { matches = []; renderSuggest(); return; }
-    const toks = q.split(' ');
+    if (q.length < 2 && !anyFilter()) { matches = []; renderSuggest(); return; }
+    const toks = q.length >= 2 ? q.split(' ') : [];
     // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
     matches = index
-      .filter((e) => !ilOnly || e.il || e.mc === 'IL')
-      .filter((e) => { const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
+      .filter(passFilters)
+      .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
       .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
       .slice(0, 12);
     renderSuggest();
-  });
+  }
+  searchEl.addEventListener('input', computeMatches);
+  searchEl.addEventListener('focus', () => { if (anyFilter() && !matches.length) computeMatches(); });
   searchEl.addEventListener('keydown', (ev) => {
     if (ev.key === 'ArrowDown') { active = Math.min(active + 1, matches.length - 1); renderSuggest(); ev.preventDefault(); }
     else if (ev.key === 'ArrowUp') { active = Math.max(active - 1, 0); renderSuggest(); ev.preventDefault(); }
@@ -416,7 +428,8 @@
     if (b) add(b.dataset.code);
   });
   document.addEventListener('click', (ev) => {
-    if (!ev.target.closest('.searchbox')) { matches = []; renderSuggest(); }
+    // קליק על צ'יפ פילטר לא סוגר את ההצעות - הוא בדיוק מה שפותח אותן
+    if (!ev.target.closest('.searchbox') && !ev.target.closest('#sampleChips')) { matches = []; renderSuggest(); }
   });
   async function add(code) {
     searchEl.value = ''; matches = []; renderSuggest();
@@ -428,22 +441,19 @@
   // ---------- צ'יפים לדוגמה ----------
   function renderSampleChips() {
     $('sampleChips').innerHTML =
-      `<button class="chip ${ilOnly ? 'sel' : ''}" id="ilOnly" data-tip="מסנן את תוצאות החיפוש למוצרים המיוצרים בישראל">${flagImg('IL')} כחול-לבן</button>` +
-      sample.filter((c) => byCode.has(c)).map((c) =>
-        `<button class="chip" data-code="${c}">+ ${byCode.get(c).n.slice(0, 22)}</button>`
-      ).join('');
+      `<button class="chip ${filters.il ? 'sel' : ''}" data-filter="il" data-tip="רק מוצרים המיוצרים בישראל">${flagImg('IL')} כחול-לבן</button>` +
+      `<button class="chip ${filters.pm ? 'sel' : ''}" data-filter="pm" data-tip="רק מוצרים שיש עליהם מבצע היום">🏷 במבצע</button>` +
+      `<button class="chip ${filters.dn ? 'sel' : ''}" data-filter="dn" data-tip="מוצרים שמחירם ירד בשבוע האחרון">▼ הוזלו לאחרונה</button>`;
   }
   $('sampleChips').addEventListener('click', (ev) => {
-    const il = ev.target.closest('#ilOnly');
-    if (il) {
-      ilOnly = !ilOnly;
-      localStorage.setItem('zulik-ilonly', ilOnly ? '1' : '0');
-      il.classList.toggle('sel', ilOnly);
-      if (searchEl.value.trim().length >= 2) searchEl.dispatchEvent(new Event('input'));
-      return;
-    }
-    const b = ev.target.closest('button[data-code]');
-    if (b) add(b.dataset.code);
+    const b = ev.target.closest('button[data-filter]');
+    if (!b) return;
+    const f = b.dataset.filter;
+    filters[f] = !filters[f];
+    if (f === 'il') localStorage.setItem('zulik-ilonly', filters.il ? '1' : '0');
+    b.classList.toggle('sel', filters[f]);
+    computeMatches();
+    if (anyFilter()) searchEl.focus();
   });
 
   // ---------- סניפים קבועים (עד 4, כל סניף בארץ) ----------

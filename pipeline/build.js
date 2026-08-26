@@ -261,6 +261,7 @@ function applyUnit(rec, code) {
   rec.ud = today;
 }
 const STALE_CUTOFF = new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10);
+const WEEK_CUTOFF = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
 
 // ריצות מקבילות בעבר הכניסו רשומות היסטוריה שלא לפי סדר זמן - ממיינים ומאחדים מחיר זהה עוקב;
 // רשתות שהוסרו (דור אלון) לא נגררות
@@ -411,6 +412,17 @@ for (const d of DISTRICTS) {
     if (rec.mc === 'IL') entry.il = 1;
     if (rec.mf) entry.b = rec.mf;
     if (rec.ls && rec.ls < STALE_CUTOFF) entry.z = 1; // לא נמכר 120+ יום - מדורג נמוך בחיפוש
+    // דגלי סינון לחיפוש: במבצע / הוזל לאחרונה (שינוי אחרון בשבוע האחרון היה ירידה)
+    if (Object.values(rec.prices).some((p) => p.pr)) entry.pm = 1;
+    let lastChg = null;
+    for (const h of Object.values(rec.history)) {
+      if (h.length < 2) continue;
+      const last = h[h.length - 1];
+      if (last[0].slice(0, 10) >= WEEK_CUTOFF && (!lastChg || last[0] > lastChg.at)) {
+        lastChg = { at: last[0], up: last[1] > h[h.length - 2][1] };
+      }
+    }
+    if (lastChg) entry[lastChg.up ? 'up' : 'dn'] = 1;
     index.push(entry);
   }
   // פירות וירקות - הצלבה לפי שם (קודים פנימיים שונים בין רשתות)
