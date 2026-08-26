@@ -1,8 +1,18 @@
 {
-  // הגדרות Cloudflare Workers: אתר סטטי בלבד - מגיש את תיקיית site
+  // Cloudflare Workers: אתר סטטי (site/) + Worker עם API התחברות (worker.js)
   "name": "salzol1",
+  "main": "worker.js",
   "compatibility_date": "2026-08-01",
   "assets": {
-    "directory": "./site"
+    "directory": "./site",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    { "binding": "USERS", "id": "ecc2be6704ba4074b072a5c43b8b29d1" }
+  ],
+  "vars": {
+    "ADMIN_EMAIL": "ohad1307@gmail.com",
+    // Client ID ציבורי של OAuth מגוגל קלאוד - ריק = התחברות כבויה
+    "GOOGLE_CLIENT_ID": ""
   }
 }

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>סלזול — פאנל ניהול</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?b=46">
+<style>
+  .admtable { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .admtable th, .admtable td { padding: 8px 10px; text-align: right; border-bottom: 0.5px solid var(--border); }
+  .admtable th { color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+  .admtable img { width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; }
+  .admstat { font-size: 15px; margin: 8px 0 16px; color: var(--text-2); }
+  .admstat b { color: var(--text); font-size: 20px; }
+</style>
+</head>
+<body>
+<header class="siteheader">
+  <div class="wrap headrow">
+    <h1 class="logo">סַלְזוֹל<span>.</span></h1>
+    <a class="linkbtn" href="./">← חזרה לאתר</a>
+  </div>
+</header>
+<div class="wrap">
+  <div class="card">
+    <h2 style="margin:0 0 4px">🛠 פאנל ניהול — משתמשים</h2>
+    <p class="admstat" id="stat">טוען…</p>
+    <div id="tablewrap" style="max-height:none"><table class="admtable" id="tbl" hidden>
+      <thead><tr><th></th><th>שם</th><th>אימייל</th><th>נרשם</th><th>כניסה אחרונה</th><th>כניסות</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </div>
+</div>
+<script>
+(async function () {
+  const stat = document.getElementById('stat');
+  const fmtD = (iso) => iso ? new Date(iso).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  const meR = await fetch('/api/me').then((r) => r.json()).catch(() => null);
+  if (!meR || !meR.user) { stat.textContent = 'צריך להתחבר קודם - חזרו לאתר והתחברו עם Google.'; return; }
+  if (!meR.user.admin) { stat.textContent = 'אין הרשאת ניהול לחשבון הזה.'; return; }
+  const r = await fetch('/api/admin/users').then((x) => (x.ok ? x.json() : null)).catch(() => null);
+  if (!r) { stat.textContent = 'שגיאה בטעינת המשתמשים.'; return; }
+  stat.innerHTML = `<b>${r.users.length}</b> משתמשים רשומים`;
+  const tb = document.getElementById('rows');
+  tb.innerHTML = r.users.map((u) => `<tr>
+    <td>${u.picture ? `<img src="${u.picture}" alt="">` : ''}</td>
+    <td><b>${u.name || ''}</b></td><td>${u.email}</td>
+    <td>${fmtD(u.created)}</td><td>${fmtD(u.lastLogin)}</td><td>${u.logins}</td>
+  </tr>`).join('');
+  document.getElementById('tbl').hidden = false;
+})();
+</script>
+</body>
+</html>

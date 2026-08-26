@@ -115,7 +115,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 
 /* הטבלה גוללת בתוך עצמה (אנכית ואופקית) - כך הכותרת נשארת דביקה תמיד */
 #tablewrap { overflow: auto; max-height: 72vh; }
-.thead, .row { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 30px; gap: 6px; align-items: center; }
+.thead, .row { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 82px; gap: 6px; align-items: center; }
 .prices-m { display: contents; }
 .thead {
   color: var(--text-2); font-size: 12px; padding: 8px 0;
@@ -220,7 +220,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
   .chg.cdown { color: #5dcaa5; }
 }
 
-.totals { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 30px; gap: 6px; padding: 12px 0 2px; border-top: 1px solid var(--border-strong); font-weight: 600; }
+.totals { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 82px; gap: 6px; padding: 12px 0 2px; border-top: 1px solid var(--border-strong); font-weight: 600; }
 .totals div { text-align: center; font-variant-numeric: tabular-nums; }
 .totals .pname { text-align: right; }
 
@@ -389,3 +389,22 @@ footer a { color: var(--text-2); }
 .thead .pname, .totals .pname { box-shadow: -8px 0 0 var(--surface); }
 /* שורת זכויות בתחתית הפוטר, מופרדת בקו עליון */
 .ftrcopy { border-top: 0.5px solid var(--border); margin-top: 18px; padding-top: 12px; font-size: 12.5px; color: var(--text-3); }
+/* התחברות: כפתור גוגל/צ'יפ משתמש בהדר + טוסט הודעות */
+.headleft { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#authBox { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.userchip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 999px; padding: 3px 10px 3px 4px; }
+.userchip img { width: 24px; height: 24px; border-radius: 50%; }
+.adminlink { font-size: 13px; color: var(--accent); text-decoration: none; }
+#authBox .linkbtn { margin-top: 0; }
+.sztoast { position: fixed; bottom: 18px; right: 50%; transform: translateX(50%); z-index: 1500;
+  background: var(--text); color: var(--bg); font-size: 14px; padding: 11px 18px; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: min(92vw, 480px); text-align: center; }
+.sztoast b { color: #9fe1cb; }
+/* כלי שורה: בורר כמות (1-10) + הסרה */
+.rowtools { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+.qtybox { display: inline-flex; align-items: center; gap: 2px; background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 999px; padding: 1px 4px; }
+.qtybox b { font-size: 12.5px; min-width: 14px; text-align: center; font-weight: 500; color: var(--text-2); }
+.qtybox b.qon { color: var(--good-text); font-weight: 700; }
+.qbtn { border: 0; background: none; cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 3px; color: var(--text-3); }
+.qbtn:hover { color: var(--text); }
+.sgfav { color: #b8860b; font-weight: 600; }

@@ -31,6 +31,60 @@
   const COUNTRY_NAME = { IL: 'ישראל', CN: 'סין', TR: 'טורקיה', IT: 'איטליה', ES: 'ספרד', DE: 'גרמניה', PL: 'פולין', FR: 'צרפת', US: 'ארה"ב', NL: 'הולנד', BE: 'בלגיה', CH: 'שוויץ', GR: 'יוון', GB: 'בריטניה', UA: 'אוקראינה', IN: 'הודו', TH: 'תאילנד', BR: 'ברזיל', AR: 'ארגנטינה', DK: 'דנמרק', SE: 'שוודיה', AT: 'אוסטריה', CZ: "צ'כיה", RO: 'רומניה', BG: 'בולגריה', LT: 'ליטא', LV: 'לטביה', PT: 'פורטוגל', IE: 'אירלנד', CA: 'קנדה', NO: 'נורווגיה', FI: 'פינלנד', EC: 'אקוודור', KR: 'קוריאה', JP: 'יפן', ZA: 'דרום אפריקה', CY: 'קפריסין', HU: 'הונגריה', VN: 'וייטנאם', LK: 'סרי לנקה', MX: 'מקסיקו', ID: 'אינדונזיה', PH: 'פיליפינים', MY: 'מלזיה', AE: 'האמירויות', JO: 'ירדן', EG: 'מצרים', SK: 'סלובקיה', SI: 'סלובניה', HR: 'קרואטיה', PE: 'פרו', CL: "צ'ילה", CO: 'קולומביה', ET: 'אתיופיה' };
   const flagHtml = (mc) => (mc && flagImg(mc) ? `<span class="rowflag" data-tip="תוצרת ${COUNTRY_NAME[mc] || mc}">${flagImg(mc)}</span>` : '');
 
+  // ---------- התחברות: אנונימי מוגבל (2 סניפים, 5 מוצרים), מחובר נהנה מהכל (5, 100) ----------
+  let me = null, googleCid = '';
+  try {
+    const auth = await fetch('/api/me').then((r) => (r.ok ? r.json() : null));
+    if (auth) { me = auth.user; googleCid = auth.cid || ''; }
+  } catch {}
+  const LIMITS = () => (me ? { favs: 5, basket: 100 } : { favs: 2, basket: 5 });
+
+  const toast = document.createElement('div');
+  toast.className = 'sztoast';
+  toast.hidden = true;
+  document.body.appendChild(toast);
+  let toastTimer = null;
+  function showToast(html) {
+    toast.innerHTML = html;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 6000);
+  }
+
+  function renderAuthUI() {
+    const box = $('authBox');
+    if (!box) return;
+    if (me) {
+      box.innerHTML = `${me.admin ? '<a class="adminlink" href="admin.html">🛠 ניהול</a>' : ''}
+        <span class="userchip">${me.picture ? `<img src="${me.picture}" alt="">` : ''}<b>${me.name}</b></span>
+        <button class="linkbtn" id="logoutBtn">התנתקות</button>`;
+      box.querySelector('#logoutBtn').addEventListener('click', async () => {
+        await fetch('/api/logout', { method: 'POST' });
+        me = null;
+        renderAuthUI();
+        showToast('התנתקת. בחינם: עד 2 סניפים ו-5 מוצרים בהשוואה.');
+      });
+    } else if (googleCid) {
+      box.innerHTML = '<div id="gsiBtn"></div>';
+      const tryRender = () => {
+        if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(tryRender, 300); return; }
+        google.accounts.id.initialize({
+          client_id: googleCid,
+          callback: async (resp) => {
+            const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: resp.credential }) }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+            if (r && r.user) {
+              me = r.user;
+              renderAuthUI();
+              showToast(`ברוכים הבאים, ${me.name}! עכשיו אפשר עד 5 סניפים ועד 100 מוצרים בהשוואה.`);
+            } else showToast('ההתחברות נכשלה - נסו שוב.');
+          },
+        });
+        google.accounts.id.renderButton(document.getElementById('gsiBtn'), { theme: 'outline', size: 'medium', text: 'signin_with', locale: 'he' });
+      };
+      tryRender();
+    } else box.innerHTML = ''; // התחברות עוד לא הוגדרה בשרת
+  }
+
   const [meta, chainsAll, sample, storesAll, cbsCities] = await Promise.all([
     fetch('data/meta.json').then((r) => r.json()),
     fetch('data/chains.json').then((r) => r.json()),
@@ -64,6 +118,11 @@
   try { favs = JSON.parse(localStorage.getItem('zulik-favs2')) || []; } catch {}
   let basket = [];
   try { basket = JSON.parse(localStorage.getItem('zulik-basket')) || []; } catch {}
+  // כמות לכל מוצר בסל (1-10) - הסה"כ מוכפל בכמות
+  let qty = {};
+  try { qty = JSON.parse(localStorage.getItem('zulik-qty')) || {}; } catch {}
+  const qtyOf = (code) => Math.min(10, Math.max(1, qty[code] || 1));
+  const saveQty = () => localStorage.setItem('zulik-qty', JSON.stringify(qty));
   let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
   let noClub = localStorage.getItem('zulik-noclub') === '1'; // הסתרת מבצעים שדורשים מועדון
   const esc = (s) => String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -72,7 +131,7 @@
   let nameMap = {};
   try { nameMap = JSON.parse(localStorage.getItem('zulik-names')) || {}; } catch {}
   setInterval(() => localStorage.setItem('zulik-names', JSON.stringify(nameMap)), 4000);
-  if (!basket.length) basket = sample.slice();
+  if (!basket.length) basket = sample.slice(0, LIMITS().basket);
   const saveBasket = () => localStorage.setItem('zulik-basket', JSON.stringify(basket));
   const expanded = new Set();
   const indexCache = {};
@@ -114,7 +173,13 @@
   const useFav = () => mode === 'fav' && favCols().length >= 2;
   async function toggleFav(key) {
     if (favs.includes(key)) favs = favs.filter((k) => k !== key);
-    else if (favs.length < 4 && favValid(key)) favs.push(key);
+    else if (favs.length >= LIMITS().favs) {
+      showToast(me
+        ? `הגעת למקסימום - עד ${LIMITS().favs} סניפים קבועים.`
+        : 'בחינם משווים עד 2 סניפים קבועים. <b>התחברו עם Google</b> (למעלה) לעד 5 סניפים ו-100 מוצרים - בחינם.');
+      return;
+    }
+    else if (favValid(key)) favs.push(key);
     localStorage.setItem('zulik-favs2', JSON.stringify(favs));
     renderFavPanel();
     updateModeUI();
@@ -153,7 +218,7 @@
       }
     }
   }
-  favs = favs.filter((k) => branchByKey.has(k)).slice(0, 4);
+  favs = favs.filter((k) => branchByKey.has(k)).slice(0, 5);
   const lmap = L.map('realmap', { scrollWheelZoom: true, touchZoom: true }).setView([31.6, 34.95], 7);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
@@ -373,7 +438,7 @@
         e.b, fmtPkg(e.u),
         mcFlag ? `${mcFlag} ${COUNTRY_NAME[e.mc] || ''}`.trim() : '',
       ].filter(Boolean).join(' · ');
-      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.ch.length} רשתות</span></button>`;
+      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}</span><br>` : ''}${e.ch.length} רשתות</span></button>`;
     }).join('');
     sugEl.hidden = false;
     hydrateSuggestImages();
@@ -407,12 +472,16 @@
     active = -1;
     if (q.length < 2 && !anyFilter()) { matches = []; renderSuggest(); return; }
     const toks = q.length >= 2 ? q.split(' ') : [];
+    // סניפים מועדפים: מוצרים שקיימים ברשתות של הסניפים הקבועים שלך עולים ראשונים
+    const favChains = new Set(favs.map((k) => (branchByKey.get(k) || {}).chain).filter(Boolean));
+    const inFav = (e) => (favChains.size ? e.ch.some((c) => favChains.has(c)) : false);
     // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
     matches = index
       .filter(passFilters)
       .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
-      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
-      .slice(0, 12);
+      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (inFav(b) - inFav(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
+      .slice(0, 12)
+      .map((e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [] }));
     renderSuggest();
   }
   searchEl.addEventListener('input', computeMatches);
@@ -433,6 +502,12 @@
   });
   async function add(code) {
     searchEl.value = ''; matches = []; renderSuggest();
+    if (!basket.includes(code) && basket.length >= LIMITS().basket) {
+      showToast(me
+        ? `הגעת למקסימום - עד ${LIMITS().basket} מוצרים בהשוואה.`
+        : 'בחינם משווים עד 5 מוצרים. <b>התחברו עם Google</b> (למעלה) להשוואה של עד 100 מוצרים ו-5 סניפים - בחינם.');
+      return;
+    }
     if (byCode.has(code)) nameMap[code] = byCode.get(code).n; // השם נלכד מיד - גם אם המוצר לא קיים באזור אחר
     if (!basket.includes(code)) { basket.push(code); saveBasket(); }
     await render();
@@ -463,12 +538,13 @@
     if (el.hidden) return;
     if (!el.dataset.init) {
       el.dataset.init = '1';
-      el.innerHTML = `<p class="favhint">בחרו עד 4 סניפים מכל ${allBranches.length} הסניפים בארץ — כאן או דרך ⭐ בחלונית של סיכה במפה. המחיר לכל סניף נלקח מסניף-הבסיס של הרשת באזור שלו.</p>
+      el.innerHTML = `<p class="favhint"></p>
         <div id="favSel" class="favsel"></div>
         <input id="favSearch" placeholder="הוסיפו סניף — חפשו לפי עיר, רשת או שם…" autocomplete="off" aria-label="חיפוש סניף">
         <div id="favResults" class="favresults"></div>`;
       el.querySelector('#favSearch').addEventListener('input', (e) => { favQuery = e.target.value.trim(); renderFavResults(); });
     }
+    el.querySelector('.favhint').textContent = `בחרו עד ${LIMITS().favs} סניפים מכל ${allBranches.length} הסניפים בארץ — כאן או דרך ⭐ בחלונית של סיכה במפה. המחיר לכל סניף נלקח מסניף-הבסיס של הרשת באזור שלו.${me ? '' : ' (בחינם: עד 2 - התחברו לעד 5)'}`;
     renderFavSel();
     renderFavResults();
   }
@@ -715,7 +791,8 @@
       });
       const have = prices.filter((p) => p !== null);
       const full = have.length === cols.length;
-      if (full) { comparable++; prices.forEach((p, i) => { totals[i] += p; }); }
+      const q = qtyOf(code);
+      if (full) { comparable++; prices.forEach((p, i) => { totals[i] += p * q; }); }
       const best = Math.min(...have);
       const bestUp = unitPrice(best, anyRec.u);
       const cells = cols.map((c, i) => {
@@ -740,7 +817,7 @@
         html: `<div class="rowwrap"><div class="row" data-code="${code}">
         <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${pkg ? `<span class="pkg">${pkg}</span>` : ''}${flagHtml(anyRec.mc)}${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
         <div class="prices-m">${cells}</div>
-        <button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button>
+        <span class="rowtools"><span class="qtybox" data-tip="כמות בסל (עד 10) - הסה&quot;כ מוכפל"><button class="qbtn" data-qdown="${code}">−</button><b class="${q > 1 ? 'qon' : ''}">${q}</b><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
       </div></div>` });
     });
 
@@ -762,7 +839,7 @@
       metricsEl.innerHTML = `
         <div class="metric"><p class="k">${useFav() ? 'הסניף הזול מביניהם' : 'הסל הזול ב' + dMeta().he}</p><p class="v">${bestCol.label}</p></div>
         <div class="metric"><p class="k">חיסכון מול היקר</p><p class="v">${fmt(worstT - bestT)} <small>${pct}%-</small></p></div>
-        <div class="metric"><p class="k">מוצרים בסל</p><p class="v">${basket.length}</p></div>`;
+        <div class="metric"><p class="k">מוצרים בסל</p><p class="v">${basket.length}${(() => { const u = basket.reduce((n, c) => n + qtyOf(c), 0); return u > basket.length ? ` <small>· ${u} יח'</small>` : ''; })()}</p></div>`;
       metricsEl.hidden = false;
     } else {
       totalsEl.hidden = true;
@@ -984,6 +1061,15 @@
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') $('pcard').hidden = true; document.body.style.overflow = ''; });
 
   $('rows').addEventListener('click', async (ev) => {
+    const qup = ev.target.closest('[data-qup]');
+    const qdown = ev.target.closest('[data-qdown]');
+    if (qup || qdown) {
+      const code = qup ? qup.dataset.qup : qdown.dataset.qdown;
+      qty[code] = Math.min(10, Math.max(1, qtyOf(code) + (qup ? 1 : -1)));
+      saveQty();
+      await render();
+      return;
+    }
     const rm = ev.target.closest('[data-rm]');
     if (rm) {
       basket = basket.filter((c) => c !== rm.dataset.rm);
@@ -1013,6 +1099,7 @@
     if (b) await openProductCard(b.dataset.code);
   });
 
+  renderAuthUI();
   await loadDistrict();
   renderDistrictUI();
   renderSampleChips();
