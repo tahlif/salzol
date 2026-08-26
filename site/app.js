@@ -226,6 +226,21 @@
     `<span><i style="background:${CHAIN_COLOR[c.id]}"></i>${c.name}</span>`
   ).join('');
 
+  // מסך רחב: המפה יושבת קבוע משמאל לחיפוש - נפתחת אוטומטית (במובייל נשארת מתקפלת)
+  const wideMapMq = matchMedia('(min-width: 760px)');
+  function syncMapLayout() {
+    if (wideMapMq.matches && $('mapSection').hidden) {
+      $('mapSection').hidden = false;
+      setTimeout(() => {
+        lmap.invalidateSize();
+        const mine = markers.filter((mk) => mk._branch.district === district);
+        fitTo(mine.length ? mine : markers);
+      }, 80);
+    }
+  }
+  syncMapLayout();
+  wideMapMq.addEventListener('change', syncMapLayout);
+
   // כל יישובי ישראל (למ"ס) + ערים מקבצי הסניפים, למקרה של איות שונה
   const cityDistrict = new Map();
   for (const c of cbsCities) cityDistrict.set(c.n, c.d);

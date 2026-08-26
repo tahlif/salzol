@@ -389,3 +389,11 @@ footer a { color: var(--text-2); }
 .thead .pname, .totals .pname { box-shadow: -8px 0 0 var(--surface); }
 /* שורת זכויות בתחתית הפוטר, מופרדת בקו עליון */
 .ftrcopy { border-top: 0.5px solid var(--border); margin-top: 18px; padding-top: 12px; font-size: 12.5px; color: var(--text-3); }
+/* מסך רחב: המפה על כל רכיביה יושבת קבוע משמאל לחיפוש; במובייל - מתקפלת כרגיל */
+.toprow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 18px; align-items: start; }
+@media (min-width: 760px) {
+  .toprow { grid-template-columns: minmax(0, 1fr) 330px; }
+  #mapToggle { display: none; }
+  #mapSection #realmap { height: 280px; }
+  #mapSection .legend { font-size: 11px; gap: 4px 10px; }
+}
