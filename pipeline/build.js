@@ -407,6 +407,7 @@ for (const d of DISTRICTS) {
     shard[code] = rec;
     const entry = { c: code, n: rec.name, ch: chainIds.filter((id) => rec.prices[id]) };
     if (rec.u) entry.u = rec.u;
+    if (rec.mc) entry.mc = rec.mc; // דגל ארץ ייצור בהצעות החיפוש - כל המדינות
     if (rec.mc === 'IL') entry.il = 1;
     if (rec.mf) entry.b = rec.mf;
     if (rec.ls && rec.ls < STALE_CUTOFF) entry.z = 1; // לא נמכר 120+ יום - מדורג נמוך בחיפוש
@@ -460,6 +461,7 @@ for (const d of DISTRICTS) {
       // מטא-שדות שחסרים ברשומה שנשארת נשאבים מהכפילות
       for (const f of ['u', 'mc', 'mf', 'ls']) if (!keptRec[f] && oRec[f]) keptRec[f] = oRec[f];
       if (!kept.u && keptRec.u) kept.u = keptRec.u;
+      if (!kept.mc && keptRec.mc) kept.mc = keptRec.mc;
       if (!kept.il && keptRec.mc === 'IL') kept.il = 1;
       if (!kept.b && keptRec.mf) kept.b = keptRec.mf;
     }

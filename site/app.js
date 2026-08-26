@@ -366,7 +366,8 @@
   function renderSuggest() {
     if (!matches.length) { sugEl.hidden = true; sugEl.innerHTML = ''; return; }
     sugEl.innerHTML = matches.map((e, i) => {
-      const meta = [e.b, fmtPkg(e.u), e.il ? flagImg('IL') : ''].filter(Boolean).join(' · ');
+      const mcFlag = flagImg(e.mc || (e.il ? 'IL' : ''));
+      const meta = [e.b, fmtPkg(e.u), mcFlag ? `${mcFlag} ${COUNTRY_NAME[e.mc] || ''}`.trim() : ''].filter(Boolean).join(' · ');
       return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.ch.length} רשתות</span></button>`;
     }).join('');
     sugEl.hidden = false;
@@ -380,11 +381,14 @@
       if (code.startsWith('v-')) { t.textContent = PRODUCE_EMOJI[code] || '🥬'; continue; }
       const c = imgCache[code];
       if (typeof c === 'string' && c) t.style.backgroundImage = `url("${c}")`;
+      else if (c === 0 || !/^\d{8,13}$/.test(code)) setThumbEmoji(t, code);
     }
     await Promise.all(codes.filter((c) => !c.startsWith('v-') && /^\d{8,13}$/.test(c)).slice(0, 12).map(async (code) => {
       const url = await fetchImg(code);
       const cur = sugEl.querySelector(`.sgthumb[data-code="${code}"]`);
-      if (cur && url) cur.style.backgroundImage = `url("${url}")`;
+      if (!cur) return;
+      if (url) cur.style.backgroundImage = `url("${url}")`;
+      else setThumbEmoji(cur, code);
     }));
   }
   let ilOnly = localStorage.getItem('zulik-ilonly') === '1';
@@ -395,7 +399,7 @@
     const toks = q.split(' ');
     // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
     matches = index
-      .filter((e) => !ilOnly || e.il)
+      .filter((e) => !ilOnly || e.il || e.mc === 'IL')
       .filter((e) => { const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
       .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
       .slice(0, 12);
@@ -533,6 +537,27 @@
   const PRODUCE_EMOJI = { 'v-tomato': '🍅', 'v-cherrytomato': '🍅', 'v-cucumber': '🥒', 'v-onion': '🧅', 'v-potato': '🥔', 'v-sweetpotato': '🍠', 'v-carrot': '🥕', 'v-pepper-red': '🫑', 'v-pepper-yellow': '🫑', 'v-eggplant': '🍆', 'v-zucchini': '🥒', 'v-cabbage': '🥬', 'v-cauliflower': '🥦', 'v-lettuce': '🥬', 'v-garlic': '🧄', 'v-banana': '🍌', 'v-apple': '🍎', 'v-pear': '🍐', 'v-lemon': '🍋', 'v-orange': '🍊', 'v-clementine': '🍊', 'v-avocado': '🥑', 'v-watermelon': '🍉', 'v-melon': '🍈', 'v-grapes': '🍇', 'v-peach': '🍑', 'v-nectarine': '🍑', 'v-mango': '🥭', 'v-strawberry': '🍓', 'v-pomegranate': '🍎', 'v-date': '🌴' };
   let imgCache = {};
   try { imgCache = JSON.parse(localStorage.getItem('zulik-img-v2')) || {}; } catch {}
+  // מוצר בלי תמונה בשום מאגר - אימוג'י קטגוריה לפי השם, שלא יישאר ריבוע ריק
+  const CAT_EMOJI = [
+    [/חלב|משקה שקד|משקה סויה|שמנת/, '🥛'], [/גבינ|קוטג|מוצרלה|פרמזן|בולגרית|צפתית/, '🧀'], [/יוגורט|מעדן|פודינג/, '🍮'],
+    [/לחם|פיתה|פיתות|לחמני|בגט|טוסט|חלה/, '🍞'], [/ביצים|ביצי חופש/, '🥚'], [/שמן זית|שמן קנולה|שמן חמניות|שמן/, '🫒'],
+    [/קפה|נס |אספרסו/, '☕'], [/\bתה\b|חליטה/, '🍵'], [/שוקולד|פרלין|נוטלה/, '🍫'], [/עוגי|ביסקוויט|וופל|פתי בר/, '🍪'],
+    [/עוגה|בראוני|מאפין|טורט/, '🍰'], [/במבה|ביסלי|חטיף|צ'יפס|תפוצ|פופקורן|בייגלה/, '🥨'],
+    [/קולה|ספרייט|פאנטה|משקה מוגז|סודה|מיץ|תרכיז|אנרגיה|XL|לימונדה/, '🥤'], [/מים מינרל|מי עדן|נביעות/, '💧'],
+    [/יין |תירוש/, '🍷'], [/בירה|וודקה|ויסקי|ערק|ליקר/, '🍺'], [/בשר|בקר|טחון|אנטריקוט|צלעות|כבש/, '🥩'],
+    [/עוף|הודו|שניצל|פרגית|כנפיים/, '🍗'], [/\bדג\b|דגים|טונה|סלמון|סרדינ|הרינג|אמנון|בקלה/, '🐟'],
+    [/אורז/, '🍚'], [/פסטה|ספגטי|אטריות|נודלס|פתיתים|קוסקוס/, '🍝'], [/קמח|שמרים/, '🌾'], [/סוכר|ממתיק/, '🍬'],
+    [/גלידה|שלגון|ארטיק|קרטיב/, '🍨'], [/דבש|ריבה|ממרח|חמאת בוטנים|סילאן/, '🍯'],
+    [/קטשופ|מיונז|חרדל|רוטב|סויה|טריאקי/, '🥫'], [/שימורי|תירס|זיתים|מלפפון חמוץ|אפונה|חומוס גרגר/, '🥫'],
+    [/נייר טואלט|מגבונ|טיטול|חיתול|נייר סופג|ממחט/, '🧻'], [/סבון|שמפו|מרכך שיער|דאודורנט|משחת שיניים|ג'ל רחצה|תחליב/, '🧴'],
+    [/אקונומיק|כביסה|מרכך כביסה|ניקוי|נוזל כלים|מטהר|אבקת/, '🧽'], [/קורנפלקס|דגני|גרנולה|שיבולת/, '🥣'],
+    [/חומוס|טחינה|סלט |מטבוחה|חציל במיונז/, '🥗'], [/נקניק|פסטרמה|סלמי|קבנוס/, '🥓'],
+    [/פיצה|בורקס|ג'חנון|מלאווח|בצק/, '🥟'], [/מלח|פלפל שחור|פפריקה|כמון|תבלין|אבקת מרק/, '🧂'],
+    [/אגוז|שקד|קשיו|בוטנ|פיצוח|גרעינ/, '🥜'], [/תמר|צימוק|מיובש|משמש/, '🍇'], [/קפוא/, '🧊'], [/ויטמין|תוסף/, '💊'],
+  ];
+  const emojiFor = (n) => { for (const [re, e] of CAT_EMOJI) if (re.test(n || '')) return e; return '🛒'; };
+  const nameOf = (code) => nameMap[code] || (byCode.has(code) ? byCode.get(code).n : '');
+  const setThumbEmoji = (t, code) => { t.style.backgroundImage = ''; t.textContent = emojiFor(nameOf(code)); };
   // מקור ראשי: CDN התמונות של רמי לוי - תמונה לפי ברקוד לרוב המוצרים בישראל;
   // נפילה: שלושת מאגרי ה-Open Facts (מזון, מוצרי צריכה, טואלטיקה)
   const IMG_DBS = ['world.openfoodfacts.org', 'world.openproductsfacts.org', 'world.openbeautyfacts.org'];
@@ -579,16 +604,16 @@
       if (code.startsWith('v-')) { t.textContent = PRODUCE_EMOJI[code] || '🥬'; continue; }
       const c = imgCache[code];
       if (typeof c === 'string' && c) { t.style.backgroundImage = `url("${c}")`; t.textContent = ''; }
+      else if (c === 0 || !/^\d{8,13}$/.test(code)) setThumbEmoji(t, code); // ידוע שאין תמונה - אימוג'י מיד
     }
     const codes = [...new Set(thumbs.map((t) => t.dataset.code))]
-      .filter((c) => !c.startsWith('v-') && /^\d{8,13}$/.test(c))
+      .filter((c) => !c.startsWith('v-') && /^\d{8,13}$/.test(c) && !(c in imgCache))
       .slice(0, 24);
     await Promise.all(codes.map(async (code) => {
       const url = await fetchImg(code);
-      if (!url) return;
       for (const cur of document.querySelectorAll(`.thumb[data-code="${code}"]`)) {
-        cur.style.backgroundImage = `url("${url}")`;
-        cur.textContent = '';
+        if (url) { cur.style.backgroundImage = `url("${url}")`; cur.textContent = ''; }
+        else setThumbEmoji(cur, code);
       }
     }));
   }
@@ -863,6 +888,7 @@
       const url = await fetchImg(code);
       const t = $('pcBody').querySelector('.pcimg');
       if (t && url) { t.style.backgroundImage = `url("${url}")`; t.textContent = ''; }
+      else if (t) { t.style.backgroundImage = ''; t.textContent = emojiFor(name || nameOf(code)); }
     }
   }
   // ---------- הגדלת תמונות: תצוגה בריחוף + לייטבוקס בלחיצה ----------
