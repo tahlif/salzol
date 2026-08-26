@@ -65,7 +65,22 @@
         showToast('התנתקת. בחינם: עד 2 סניפים ו-5 מוצרים בהשוואה.');
       });
     } else if (googleCid) {
-      box.innerHTML = '<div id="gsiBtn"></div>';
+      // כפתור "התחברות" שלנו; לחיצה פותחת חלונית עם כפתור גוגל הרשמי
+      // (שמציג את שם חשבון הגוגל של הגולש כשיש לו סשן בדפדפן)
+      box.innerHTML = `<button class="loginbtn" id="loginOpen">התחברות</button>
+        <div class="authpop" id="authPop" hidden>
+          <p class="authtitle">מתחברים לסַלְזוֹל עם חשבון Google:</p>
+          <div id="gsiBtn"></div>
+          <small>מחוברים משווים עד 5 סניפים ועד 100 מוצרים - בחינם</small>
+        </div>`;
+      const pop = box.querySelector('#authPop');
+      box.querySelector('#loginOpen').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        pop.hidden = !pop.hidden;
+      });
+      document.addEventListener('click', (ev) => {
+        if (!pop.hidden && !ev.target.closest('#authBox')) pop.hidden = true;
+      });
       const tryRender = () => {
         if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(tryRender, 300); return; }
         google.accounts.id.initialize({
@@ -79,7 +94,7 @@
             } else showToast('ההתחברות נכשלה - נסו שוב.');
           },
         });
-        google.accounts.id.renderButton(document.getElementById('gsiBtn'), { theme: 'outline', size: 'medium', text: 'signin_with', locale: 'he' });
+        google.accounts.id.renderButton(document.getElementById('gsiBtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'he' });
       };
       tryRender();
     } else box.innerHTML = ''; // התחברות עוד לא הוגדרה בשרת
