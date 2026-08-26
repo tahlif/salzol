@@ -403,3 +403,5 @@ footer a { color: var(--text-2); }
    שתאי מבצע/יחידה לא יציצו מתחתיה בגלילה אופקית */
 .row .pname { align-self: stretch; align-items: flex-start; margin-top: 0; padding-top: 6px; box-shadow: -8px 0 0 var(--surface); }
 .thead .pname, .totals .pname { box-shadow: -8px 0 0 var(--surface); }
+/* שורת זכויות בתחתית הפוטר, מופרדת בקו עליון */
+.ftrcopy { border-top: 0.5px solid var(--border); margin-top: 18px; padding-top: 12px; font-size: 12.5px; color: var(--text-3); }

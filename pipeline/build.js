@@ -234,6 +234,7 @@ for (const [code, v] of countryVotes) globalCountry.set(code, majority(v).best);
 const districtMeta = [];
 const changedKeys = new Set(); // רשת+ברקוד - שינוי ארצי של רשת אחידה נספר פעם אחת
 let grandProducts = 0;
+const uniqueProducts = new Set(); // פריטים ייחודיים בכל הארץ (לשורת "במאגר" בפוטר)
 
 // שרינקפלציה: אריזה שהתכווצה (אותו ברקוד, כמות ירדה) - נצבר לאורך זמן ב-shrink.json
 const SHRINK_FILE = path.join(DATA, 'shrink.json');
@@ -515,6 +516,7 @@ for (const d of DISTRICTS) {
     branches: Object.fromEntries(chainIds.map((id) => [id, branches[id][d.id] ? { name: branches[id][d.id].name, city: branches[id][d.id].city } : null])),
   });
   grandProducts += index.length;
+  for (const e of index) uniqueProducts.add(e.c);
   console.log(`${d.he}: ${chainIds.length} רשתות, ${index.length} מוצרים, ${changed} שינויי מחיר, ${promoAttached} מבצעים (${Object.keys(promos).length} רשתות)`);
 }
 
@@ -523,6 +525,6 @@ fs.writeFileSync(SHRINK_FILE, JSON.stringify(shrinkEvents.slice(0, 500)));
 if (shrinkEvents.length) console.log(`שרינקפלציה: ${shrinkEvents.length} אירועים מצטברים`);
 
 fs.writeFileSync(path.join(DATA, 'meta.json'), JSON.stringify({
-  updated: today, updatedAt: new Date().toISOString(), districts: districtMeta, stores: totalStores, priceChanges: changedKeys.size,
+  updated: today, updatedAt: new Date().toISOString(), districts: districtMeta, stores: totalStores, products: uniqueProducts.size, priceChanges: changedKeys.size,
 }));
 console.log(`\nסה"כ: ${districtMeta.length} מחוזות, ${grandProducts} רשומות מוצר-מחוז, ${totalStores} סניפים, ${changedKeys.size} שינויי מחיר ייחודיים`);

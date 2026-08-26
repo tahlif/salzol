@@ -54,7 +54,7 @@
   const upTime = upAt ? upAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
   const updatedLabel = `${d}.${m}.${y}${upTime ? ' ' + upTime : ''}`;
   $('updatedBadge').textContent = `מחירים רשמיים · עודכן ${updatedLabel}`;
-  $('storesLine').textContent = `במאגר: ${meta.stores.toLocaleString()} סניפים מ-${chainsAll.length} רשתות, ב-${meta.districts.length} אזורים.`;
+  $('storesLine').textContent = `במאגר: ${meta.products ? meta.products.toLocaleString() + ' פריטים · ' : ''}${meta.stores.toLocaleString()} סניפים · ${chainsAll.length} רשתות.`;
 
   // ---------- מצב ----------
   let district = localStorage.getItem('zulik-district');
