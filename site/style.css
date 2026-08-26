@@ -445,3 +445,20 @@ footer a { color: var(--text-2); }
 .menuitem { display: block; width: 100%; text-align: right; font: inherit; font-size: 14px; color: var(--text);
   background: none; border: 0; padding: 10px 14px; cursor: pointer; text-decoration: none; }
 .menuitem:hover { background: var(--surface-2); }
+/* מודל התחברות v2 - עיצוב מודרני + כפתור גוגל בסטייל שלנו */
+.authbox2 { max-width: 380px; padding: 28px 30px 24px; border-radius: 20px; }
+.authbrand { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
+.authbrand span { color: var(--accent); }
+.authbox2 h3 { margin: 0 0 2px; font-size: 19px; }
+.authsub { margin: 0 0 16px; font-size: 13px; color: var(--text-3); }
+.authbox2 input { padding: 12px 14px; border-radius: 12px; margin-bottom: 10px; background: var(--bg); border-color: var(--border); }
+.authbox2 input:focus { background: var(--surface); }
+.authsubmit { border-radius: 12px; padding: 12px; font-size: 15.5px; font-weight: 700;
+  background: linear-gradient(180deg, #22b184, var(--accent)); box-shadow: 0 2px 8px rgba(29,158,117,.3); }
+.gslot { position: relative; height: 46px; }
+.gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 46px;
+  font: inherit; font-size: 14.5px; font-weight: 600; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; cursor: pointer; }
+.gslot:hover .gbtn { background: var(--surface-2); }
+.gsireal { position: absolute; inset: 0; opacity: 0.001; overflow: hidden; }
+.gsireal > div, .gsireal iframe { width: 100% !important; height: 46px !important; }

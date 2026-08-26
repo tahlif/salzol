@@ -59,23 +59,26 @@
     'missing-name': 'חסר שם.', 'bad-token': 'קישור האיפוס פג תוקף - בקשו קישור חדש.',
     'reset-not-available': 'איפוס במייל יופעל בקרוב. בינתיים היכנסו עם Google, או כתבו לנו: contact@salzol.com',
   };
+  // כפתור גוגל בעיצוב שלנו: ה-iframe הרשמי שקוף מעל - הקליק אמיתי, המראה מודרני
+  const GOOGLE_G = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  const GSLOT = `<div class="gslot"><button class="gbtn" type="button" tabindex="-1">${GOOGLE_G}<span>המשך עם Google</span></button><div id="gsiBtn" class="gsireal"></div></div>`;
   function authView(view, resetToken) {
     const F = {
-      login: `<h3>התחברות לסַלְזוֹל</h3>
+      login: `<h3>התחברות לסַלְזוֹל</h3><p class="authsub">משווים עד 5 סניפים ועד 100 מוצרים - בחינם</p>
         <input type="email" id="afEmail" placeholder="אימייל" autocomplete="email">
         <input type="password" id="afPass" placeholder="סיסמה" autocomplete="current-password">
         <p class="autherr" id="afErr" hidden></p>
         <button class="authsubmit" id="afGo">התחברות</button>
         <p class="authlinks"><a href="#" data-v="register">להרשמה</a> · <a href="#" data-v="forgot">שכחתי סיסמה</a></p>
-        <div class="authdiv"><span>או</span></div><div id="gsiBtn"></div>`,
-      register: `<h3>הרשמה לסַלְזוֹל</h3>
+        <div class="authdiv"><span>או</span></div>${GSLOT}`,
+      register: `<h3>הרשמה לסַלְזוֹל</h3><p class="authsub">הרשמה חינם - עד 5 סניפים ועד 100 מוצרים בהשוואה</p>
         <input type="text" id="afName" placeholder="שם" autocomplete="name">
         <input type="email" id="afEmail" placeholder="אימייל" autocomplete="email">
         <input type="password" id="afPass" placeholder="סיסמה (לפחות 6 תווים)" autocomplete="new-password">
         <p class="autherr" id="afErr" hidden></p>
         <button class="authsubmit" id="afGo">הרשמה</button>
         <p class="authlinks">כבר רשומים? <a href="#" data-v="login">התחברות</a></p>
-        <div class="authdiv"><span>או</span></div><div id="gsiBtn"></div>`,
+        <div class="authdiv"><span>או</span></div>${GSLOT}`,
       forgot: `<h3>איפוס סיסמה</h3>
         <p class="authnote">נשלח לכם קישור איפוס לאימייל:</p>
         <input type="email" id="afEmail" placeholder="אימייל" autocomplete="email">
@@ -116,7 +119,7 @@
             else err();
           },
         });
-        if ($('gsiBtn')) google.accounts.id.renderButton($('gsiBtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'he' });
+        if ($('gsiBtn')) google.accounts.id.renderButton($('gsiBtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'he', width: '320' });
       };
       tryRender();
     }
