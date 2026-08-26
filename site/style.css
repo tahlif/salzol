@@ -390,3 +390,11 @@ footer a { color: var(--text-2); }
 /* עמודות צרות: תא נקי - מחיר+חץ ומבצע בלבד; ₪/100ג' נשאר בקארד ובמסך רחב */
 .narrowcols .price .unitp { display: none; }
 .narrowcols .chg { font-size: 10px; }
+/* דגלים כתמונות (ווינדוס בלי דגלי אמוג'י) */
+.flagimg { width: 15px; height: 15px; vertical-align: -2px; border-radius: 2px; }
+.sgmeta .flagimg, .pcmeta .flagimg { width: 13px; height: 13px; }
+/* קארד במסך צר: הגרף לא גולש */
+.spark { max-width: 100%; }
+.pcprice .phist { flex-wrap: wrap; }
+/* עמודות צרות: שם המוצר מקבל את כל הרוחב - בלי תג גודל ודגל בשורה (יש אותם בקארד) */
+.narrowcols .row .pkg, .narrowcols .row .rowflag { display: none; }

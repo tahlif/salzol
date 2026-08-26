@@ -22,9 +22,14 @@
     return q + ' מטר';
   }
   const UNIT_HE = { g: 'גרם', ml: 'מ"ל', unit: "יח'", m: 'מטר' };
-  const flagOf = (cc) => (cc && /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0))) : '');
+  // דגלים כתמונות SVG - ווינדוס לא מציג דגלי אמוג'י (מראה אותיות IL במקום דגל)
+  const flagImg = (cc) => {
+    if (!cc || !/^[A-Z]{2}$/.test(cc)) return '';
+    const cp = [...cc].map((c) => (0x1f1e6 + c.charCodeAt(0) - 65).toString(16)).join('-');
+    return `<img class="flagimg" alt="${cc}" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/${cp}.svg" loading="lazy" onerror="this.hidden=1">`;
+  };
   const COUNTRY_NAME = { IL: 'ישראל', CN: 'סין', TR: 'טורקיה', IT: 'איטליה', ES: 'ספרד', DE: 'גרמניה', PL: 'פולין', FR: 'צרפת', US: 'ארה"ב', NL: 'הולנד', BE: 'בלגיה', CH: 'שוויץ', GR: 'יוון', GB: 'בריטניה', UA: 'אוקראינה', IN: 'הודו', TH: 'תאילנד', BR: 'ברזיל', AR: 'ארגנטינה', DK: 'דנמרק', SE: 'שוודיה', AT: 'אוסטריה', CZ: "צ'כיה", RO: 'רומניה', BG: 'בולגריה', LT: 'ליטא', LV: 'לטביה', PT: 'פורטוגל', IE: 'אירלנד', CA: 'קנדה', NO: 'נורווגיה', FI: 'פינלנד', EC: 'אקוודור', KR: 'קוריאה', JP: 'יפן', ZA: 'דרום אפריקה', CY: 'קפריסין', HU: 'הונגריה', VN: 'וייטנאם', LK: 'סרי לנקה', MX: 'מקסיקו', ID: 'אינדונזיה', PH: 'פיליפינים', MY: 'מלזיה', AE: 'האמירויות', JO: 'ירדן', EG: 'מצרים', SK: 'סלובקיה', SI: 'סלובניה', HR: 'קרואטיה', PE: 'פרו', CL: "צ'ילה", CO: 'קולומביה', ET: 'אתיופיה' };
-  const flagHtml = (mc) => (mc && flagOf(mc) ? `<span class="rowflag" data-tip="תוצרת ${COUNTRY_NAME[mc] || mc}">${flagOf(mc)}</span>` : '');
+  const flagHtml = (mc) => (mc && flagImg(mc) ? `<span class="rowflag" data-tip="תוצרת ${COUNTRY_NAME[mc] || mc}">${flagImg(mc)}</span>` : '');
 
   const [meta, chainsAll, sample, storesAll, cbsCities] = await Promise.all([
     fetch('data/meta.json').then((r) => r.json()),
@@ -361,7 +366,7 @@
   function renderSuggest() {
     if (!matches.length) { sugEl.hidden = true; sugEl.innerHTML = ''; return; }
     sugEl.innerHTML = matches.map((e, i) => {
-      const meta = [e.b, fmtPkg(e.u), e.il ? '🇮🇱' : ''].filter(Boolean).join(' · ');
+      const meta = [e.b, fmtPkg(e.u), e.il ? flagImg('IL') : ''].filter(Boolean).join(' · ');
       return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.ch.length} רשתות</span></button>`;
     }).join('');
     sugEl.hidden = false;
@@ -419,7 +424,7 @@
   // ---------- צ'יפים לדוגמה ----------
   function renderSampleChips() {
     $('sampleChips').innerHTML =
-      `<button class="chip ${ilOnly ? 'sel' : ''}" id="ilOnly" data-tip="מסנן את תוצאות החיפוש למוצרים המיוצרים בישראל">🇮🇱 כחול-לבן</button>` +
+      `<button class="chip ${ilOnly ? 'sel' : ''}" id="ilOnly" data-tip="מסנן את תוצאות החיפוש למוצרים המיוצרים בישראל">${flagImg('IL')} כחול-לבן</button>` +
       sample.filter((c) => byCode.has(c)).map((c) =>
         `<button class="chip" data-code="${c}">+ ${byCode.get(c).n.slice(0, 22)}</button>`
       ).join('');
@@ -711,7 +716,6 @@
     }
     hydrateImages();
     resolveMissingNames();
-    renderChangesFeed(); // הפיד עוקב אחרי האזור/הסניפים הנוכחיים
   }
   // שמות למוצרים שלא נמכרים באזור הנוכחי - חיפוש שקט בשאר האזורים ועדכון השורה
   let namesBusy = false;
@@ -834,7 +838,7 @@
           if (pkg) bits.push(pkg);
           if (best != null) { const up = unitPrice(best, cardU); if (up) bits.push(`<bdi>${fmtU(up)}</bdi>`); }
           if (cardRec && cardRec.mf) bits.push(cardRec.mf);
-          if (cardRec && cardRec.mc && flagOf(cardRec.mc)) bits.push(`${flagOf(cardRec.mc)} ${COUNTRY_NAME[cardRec.mc] || cardRec.mc}`);
+          if (cardRec && cardRec.mc && flagImg(cardRec.mc)) bits.push(`${flagImg(cardRec.mc)} ${COUNTRY_NAME[cardRec.mc] || cardRec.mc}`);
           const meta1 = bits.length ? `<p class="pcmeta">${bits.join(' · ')}</p>` : '';
           // שרינקפלציה: האריזה התכווצה (qh = היסטוריית כמויות מה-build)
           let shrink = '';
@@ -937,42 +941,6 @@
     if (th && thumbUrl(th)) { openImgZoom(thumbUrl(th)); return; }
     const row = ev.target.closest('.row[data-code]');
     if (row) await openProductCard(row.dataset.code);
-  });
-
-  // ---------- פיד שינויי מחירים: מה התייקר/הוזל באזור בשבוע האחרון ----------
-  const changesCache = {};
-  let chgFilter = 'all';
-  let chgShown = 12;
-  async function renderChangesFeed() {
-    const dist = useFav() ? (favCols()[0] || { district }).district : district;
-    if (!(dist in changesCache)) {
-      changesCache[dist] = await fetch(`data/d/${dist}/changes.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
-    }
-    const all = changesCache[dist] || [];
-    $('changesCard').hidden = !all.length;
-    if (!all.length) return;
-    const list = all.filter((e) => chgFilter === 'all' || (chgFilter === 'up' ? e.t > e.f : e.t < e.f));
-    const ups = all.filter((e) => e.t > e.f).length;
-    $('chgCount').textContent = `${all.length} שינויים בשבוע האחרון באזור ${districtHe[dist] || ''}: ${ups} התייקרו, ${all.length - ups} הוזלו · לחיצה פותחת את המוצר`;
-    $('changesList').innerHTML = list.slice(0, chgShown).map((e) => {
-      const up = e.t > e.f;
-      const pct = e.f ? Math.round((Math.abs(e.t - e.f) / e.f) * 100) : 0;
-      return `<button class="shrinkrow" data-code="${e.c}"><span class="thumb" data-code="${e.c}"></span><span class="shrinktxt"><b>${e.n}</b><small>${chainName[e.ch] || e.ch} · <span class="${up ? 'chgup' : 'chgdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}%</span> · <bdi>${fmt(e.f)} ← ${fmt(e.t)}</bdi> · ${fmtDT(e.d)}</small></span></button>`;
-    }).join('') + (list.length > chgShown ? `<button class="linkbtn" id="chgMore">הצגת עוד שינויים ▾</button>` : '');
-    hydrateImages();
-  }
-  $('chgFilters').addEventListener('click', (ev) => {
-    const b = ev.target.closest('button[data-f]');
-    if (!b) return;
-    chgFilter = b.dataset.f;
-    chgShown = 12;
-    for (const c of $('chgFilters').children) c.classList.toggle('sel', c === b);
-    renderChangesFeed();
-  });
-  $('changesList').addEventListener('click', async (ev) => {
-    if (ev.target.closest('#chgMore')) { chgShown += 24; renderChangesFeed(); return; }
-    const b = ev.target.closest('[data-code]');
-    if (b) await openProductCard(b.dataset.code);
   });
 
   // ---------- מכווצים לכם את האריזה (shrink.json נצבר ב-build לאורך זמן) ----------
