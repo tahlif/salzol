@@ -53,7 +53,7 @@
   const upAt = meta.updatedAt ? new Date(meta.updatedAt) : null;
   const upTime = upAt ? upAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
   const updatedLabel = `${d}.${m}.${y}${upTime ? ' ' + upTime : ''}`;
-  $('updatedBadge').textContent = `מחירים רשמיים · עדכון אחרון ${updatedLabel}`;
+  $('updatedBadge').textContent = `עדכון אחרון ${updatedLabel}`;
   $('storesLine').textContent = `במאגר: ${meta.products ? meta.products.toLocaleString() + ' פריטים · ' : ''}${meta.stores.toLocaleString()} סניפים · ${chainsAll.length} רשתות.`;
 
   // ---------- מצב ----------
