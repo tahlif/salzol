@@ -271,14 +271,6 @@
   });
 
   function renderDistrictUI() {
-    const dm = dMeta();
-    const branchBits = dChains().map((id) => {
-      const b = dm.branches[id];
-      return b ? `<span><b>${chainName[id]}</b> ${b.name}${b.city && !b.name.includes(b.city) ? ' · ' + b.city : ''}</span>` : '';
-    }).filter(Boolean).join('');
-    $('districtInfo').innerHTML =
-      `<p class="dsum">ההשוואה לפי אזור <b>${dm.he}</b>: ${dChains().length} רשתות · ${dm.products.toLocaleString()} מוצרים${cityFilter ? ` · מסונן: ${cityFilter}` : ''}</p>
-       <div class="dbranches">${branchBits}</div>`;
     setBranchesToggleText();
     renderBranchList();
   }
@@ -700,11 +692,15 @@
       }
       const up = last[1] > first[1];
       const pct = first[1] ? Math.round((Math.abs(last[1] - first[1]) / first[1]) * 100) : 0;
+      // יציב = שורת טקסט בלבד, בלי גרף שטוח מיותר
+      if (stable) {
+        return `<div class="hrow"><span class="hchain">${label}</span><span class="hprices">${fmt(last[1])} · יציב מאז ${fmtD(first[0])}</span></div>`;
+      }
       return `<div class="hrow">
         <span class="hchain">${label}</span>
         ${spark(h, up, true)}
-        <span class="hprices">${stable ? `${fmt(last[1])} ללא שינוי מאז ${fmtD(first[0])}` : `מ־${fmt(first[1])} ל־${fmt(last[1])}`}</span>
-        ${stable ? '<span class="hbadge hstable">— יציב</span>' : `<span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}%</span>`}
+        <span class="hprices">מ־${fmt(first[1])} ל־${fmt(last[1])}</span>
+        <span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}%</span>
       </div>`;
     }).filter(Boolean).join('');
     const availHtml = Object.keys(avail).length
@@ -732,8 +728,7 @@
       ${noneHere ? `<p class="pcnote">המוצר לא נמכר ב${useFav() ? 'סניפים שבחרת' : 'אזור הנוכחי'} — הנה איפה כן:</p>` : ''}
       ${have.length ? `<div class="pcprices">${priceRows}</div>` : ''}
       ${histRows ? `<div class="pchist"><p class="pctitle">היסטוריית מחירים <small>(ריחוף על נקודה = תאריך השינוי)</small></p>${histRows}</div>` : '<p class="hnote">המחיר יציב מאז שהתחלנו לעקוב.</p>'}
-      <p class="pctitle" style="margin-top:12px">איפה המוצר נמכר</p>
-      ${availHtml}
+      <details class="pcdet"><summary>איפה המוצר נמכר</summary>${availHtml}</details>
       <p class="hnote">המחירים נכונים לעדכון האחרון: ${updatedLabel}</p>`;
     $('pcard').hidden = false;
     // תמונה גדולה
