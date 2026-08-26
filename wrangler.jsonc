@@ -11,7 +11,7 @@
     { "binding": "USERS", "id": "ecc2be6704ba4074b072a5c43b8b29d1" }
   ],
   "vars": {
-    "ADMIN_EMAIL": "ohad1307@gmail.com",
+    "ADMIN_EMAIL": "osherd402@gmail.com",
     // Client ID ציבורי של OAuth מגוגל קלאוד - ריק = התחברות כבויה
     "GOOGLE_CLIENT_ID": "1029377319666-u2f5pe6ol1nc2rrdjb1rgp3r4eic6gpd.apps.googleusercontent.com"
   }

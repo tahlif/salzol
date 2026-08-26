@@ -517,6 +517,13 @@
   });
   async function add(code) {
     searchEl.value = ''; matches = []; renderSuggest();
+    // בחירה חוזרת של מוצר שכבר בסל = עוד יחידה (עד 10) - כל המחירים והסה"כ מתעדכנים
+    if (basket.includes(code)) {
+      qty[code] = Math.min(10, qtyOf(code) + 1);
+      saveQty();
+      await render();
+      return;
+    }
     if (!basket.includes(code) && basket.length >= LIMITS().basket) {
       showToast(me
         ? `הגעת למקסימום - עד ${LIMITS().basket} מוצרים בהשוואה.`
@@ -822,9 +829,10 @@
         const up = unitPrice(p, colRecs[i] && colRecs[i].u);
         const uline = up ? `<small class="unitp"><bdi>${fmtUShort(up)}</bdi></small>` : '';
         const pr = colRecs[i] && colRecs[i].prices[c.chain] && colRecs[i].prices[c.chain].pr;
-        const prLine = pr && !(noClub && pr.c) ? `<small class="promop" data-tip="${promoTip(pr)}">🏷 ${fmt(pr.p)}${pr.c ? '🎫' : ''}</small>` : '';
+        // כמות>1: המחיר המוצג ומחיר המבצע מוכפלים בכמות (מחיר-ליחידה נשאר ל-100ג' - מדד השוואה)
+        const prLine = pr && !(noClub && pr.c) ? `<small class="promop" data-tip="${promoTip(pr)}">🏷 ${fmt(pr.p * q)}${pr.c ? '🎫' : ''}</small>` : '';
         // כל תא באותו מבנה בדיוק (pval תמיד) - גבהים אחידים, והתג הכחול לא גולש על השורות שמתחת
-        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}"><span class="pval">${fmt(p)}${arrow}</span>${prLine}${uline}</div>`;
+        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}"><span class="pval">${fmt(p * q)}${arrow}</span>${prLine}${uline}</div>`;
       }).join('');
       const pkg = fmtPkg(anyRec.u);
       rows.push({

@@ -44,6 +44,15 @@ async function readSession(env, request) {
 const sessionCookie = (value, maxAge) =>
   `${COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 
+// אדמין = ADMIN_EMAIL (שורש, לא ניתן להסרה) או משתמש שקודם ל-role:'admin' דרך הפאנל
+const isRootAdmin = (env, email) => !!(email && env.ADMIN_EMAIL && email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase());
+async function isAdmin(env, s) {
+  if (!s) return false;
+  if (isRootAdmin(env, s.email)) return true;
+  const u = await env.USERS.get('user:' + s.sub, 'json');
+  return !!(u && u.role === 'admin');
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -64,11 +73,13 @@ export default {
         created: existing ? existing.created : new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         logins: (existing ? existing.logins || 0 : 0) + 1,
+        role: existing ? existing.role || '' : '',
       };
       await env.USERS.put(key, JSON.stringify(user));
       const session = await makeSession(env, user);
+      const admin = isRootAdmin(env, user.email) || user.role === 'admin';
       return json(
-        { user: { email: user.email, name: user.name, picture: user.picture, admin: user.email === env.ADMIN_EMAIL } },
+        { user: { email: user.email, name: user.name, picture: user.picture, admin } },
         200, { 'set-cookie': sessionCookie(session, SESSION_DAYS * 86400) },
       );
     }
@@ -76,7 +87,7 @@ export default {
     if (url.pathname === '/api/me') {
       const s = await readSession(env, request);
       // cid = ה-Client ID הציבורי של גוגל - הלקוח צריך אותו כדי לצייר את כפתור ההתחברות
-      return json({ user: s ? { email: s.email, name: s.name, picture: s.pic, admin: s.email === env.ADMIN_EMAIL } : null, cid: env.GOOGLE_CLIENT_ID || '' });
+      return json({ user: s ? { email: s.email, name: s.name, picture: s.pic, admin: await isAdmin(env, s) } : null, cid: env.GOOGLE_CLIENT_ID || '' });
     }
 
     if (url.pathname === '/api/logout' && request.method === 'POST') {
@@ -85,19 +96,39 @@ export default {
 
     if (url.pathname === '/api/admin/users') {
       const s = await readSession(env, request);
-      if (!s || s.email !== env.ADMIN_EMAIL) return json({ error: 'forbidden' }, 403);
+      if (!(await isAdmin(env, s))) return json({ error: 'forbidden' }, 403);
       const users = [];
       let cursor;
       do {
         const page = await env.USERS.list({ prefix: 'user:', cursor });
         for (const k of page.keys) {
           const u = await env.USERS.get(k.name, 'json');
-          if (u) users.push({ email: u.email, name: u.name, picture: u.picture, created: u.created, lastLogin: u.lastLogin, logins: u.logins || 1 });
+          if (u) users.push({
+            sub: u.sub, email: u.email, name: u.name, picture: u.picture,
+            created: u.created, lastLogin: u.lastLogin, logins: u.logins || 1,
+            role: isRootAdmin(env, u.email) ? 'root' : (u.role || ''),
+          });
         }
         cursor = page.list_complete ? null : page.cursor;
       } while (cursor);
       users.sort((a, b) => (a.created < b.created ? 1 : -1));
       return json({ users });
+    }
+
+    // קידום/הורדת מנהל מהפאנל - אדמין בלבד; את אדמין-השורש אי אפשר להוריד
+    if (url.pathname === '/api/admin/setrole' && request.method === 'POST') {
+      const s = await readSession(env, request);
+      if (!(await isAdmin(env, s))) return json({ error: 'forbidden' }, 403);
+      let body = {};
+      try { body = await request.json(); } catch {}
+      if (!body.sub || !['admin', 'user'].includes(body.role)) return json({ error: 'bad-request' }, 400);
+      const key = 'user:' + body.sub;
+      const u = await env.USERS.get(key, 'json');
+      if (!u) return json({ error: 'not-found' }, 404);
+      if (isRootAdmin(env, u.email)) return json({ error: 'root-admin-locked' }, 400);
+      u.role = body.role === 'admin' ? 'admin' : '';
+      await env.USERS.put(key, JSON.stringify(u));
+      return json({ ok: true, email: u.email, role: u.role });
     }
 
     return json({ error: 'not-found' }, 404);
