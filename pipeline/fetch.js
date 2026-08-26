@@ -158,6 +158,13 @@ const IMPL = {
       const file = await get(link.replace(/&amp;/g, '&'));
       return gunzipMaybe(file.body);
     },
+    async promo(chain, store) {
+      const page = await get(`http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=4&storeId=${parseInt(store, 10)}`);
+      const link = (page.text().match(new RegExp('https://[^"]*PromoFull' + chain.chainId + '[^"]*')) || [])[0];
+      if (!link) throw new Error('no PromoFull for store ' + store);
+      const file = await get(link.replace(/&amp;/g, '&'));
+      return gunzipMaybe(file.body);
+    },
   },
   cerberus: {
     async stores(chain, ctx) {
@@ -170,6 +177,12 @@ const IMPL = {
       ctx.session = ctx.session || await cerberusSession(chain.user);
       const names = (await ctx.session.dir('PriceFull' + chain.chainId)).filter((n) => new RegExp('-' + store + '-\\d{8}').test(n)).sort().reverse();
       if (!names.length) throw new Error('no PriceFull for store ' + store);
+      return gunzipMaybe(await ctx.session.download(names[0]));
+    },
+    async promo(chain, store, ctx) {
+      ctx.session = ctx.session || await cerberusSession(chain.user);
+      const names = (await ctx.session.dir('PromoFull' + chain.chainId)).filter((n) => new RegExp('-' + store + '-\\d{8}').test(n)).sort().reverse();
+      if (!names.length) throw new Error('no PromoFull for store ' + store);
       return gunzipMaybe(await ctx.session.download(names[0]));
     },
   },
@@ -201,6 +214,13 @@ const IMPL = {
       const file = await get(`https://prices.carrefour.co.il/${dir}/${pf[0]}`);
       return gunzipMaybe(file.body);
     },
+    async promo(chain, store, ctx) {
+      const { path: dir, files } = await IMPL.carrefour.page(ctx);
+      const pf = files.filter((f) => f.name.startsWith(`PromoFull${chain.chainId}-001-${store}-`)).map((f) => f.name).sort().reverse();
+      if (!pf.length) throw new Error('no PromoFull for store ' + store);
+      const file = await get(`https://prices.carrefour.co.il/${dir}/${pf[0]}`);
+      return gunzipMaybe(file.body);
+    },
   },
   bina: {
     // binaprojects: MainIO_Hok.aspx מחזיר JSON של קבצים; WFileType: 1=סניפים, 4=מחירים מלא
@@ -224,6 +244,13 @@ const IMPL = {
       const file = await get(`http://${chain.sub}.binaprojects.com/Download/${encodeURIComponent(names[0])}`);
       return gunzipMaybe(file.body);
     },
+    async promo(chain, store, ctx) {
+      // WFileType=5 = PromoFull (2=Price, 3=Promo חלקי, 4=PriceFull)
+      const names = (await IMPL.bina.list(chain, ctx, 5)).filter((n) => new RegExp('-' + store + '-\\d{8}').test(n)).sort().reverse();
+      if (!names.length) throw new Error('no PromoFull for store ' + store);
+      const file = await get(`http://${chain.sub}.binaprojects.com/Download/${encodeURIComponent(names[0])}`);
+      return gunzipMaybe(file.body);
+    },
   },
   hazihinam: {
     async stores(chain) {
@@ -242,6 +269,12 @@ const IMPL = {
         if (itemCount(xml.toString('utf8')) > 1000) return xml; // דילוג על קובצי השלמה קטנים
       }
       throw new Error('only partial files for store ' + store);
+    },
+    async promo(chain, store) {
+      const page = await get('https://shop.hazi-hinam.co.il/Prices?t=2');
+      const links = [...page.text().matchAll(new RegExp('https://[^"]*PromoFull' + chain.chainId + '-000-' + store + '-[^"]*\\.gz', 'g'))].map((m) => m[0]).sort().reverse();
+      if (!links.length) throw new Error('no PromoFull for store ' + store);
+      return gunzipMaybe((await get(links[0])).body);
     },
   },
 };
@@ -281,7 +314,7 @@ function chooseBranches(chain, stores, existing) {
 (async () => {
   let branches = {};
   try { branches = JSON.parse(fs.readFileSync(BRANCHES_FILE, 'utf8')); } catch {}
-  let okPrice = 0, failPrice = 0;
+  let okPrice = 0, failPrice = 0, okPromo = 0;
 
   for (const chain of CHAINS) {
     const impl = IMPL[chain.type];
@@ -299,6 +332,16 @@ function chooseBranches(chain, stores, existing) {
     }
 
     branches[chain.id] = chooseBranches(chain, stores, branches[chain.id]);
+    // מבצעים: לא-פטאלי - רשת בלי PromoFull פשוט תוצג בלי מבצעים
+    const fetchPromo = async (store, districts) => {
+      if (!impl.promo) return;
+      try {
+        const xml = await impl.promo(chain, store, ctx);
+        for (const district of districts) fs.writeFileSync(path.join(CACHE, `promo-${chain.id}-${district}.xml`), xml);
+        console.log(`  מבצעים (${store}): ${(xml.length / 1024 / 1024).toFixed(1)}MB → ${districts.length} מחוזות`);
+        okPromo++;
+      } catch (e) { console.warn(`  מבצעים (${store}) אין - ${e.message}`); }
+    };
     if (chain.uniform) {
       try {
         const xml = await impl.price(chain, chain.priceStore, ctx);
@@ -311,6 +354,7 @@ function chooseBranches(chain, stores, existing) {
         console.error(`  מחיר אחיד נכשל - ${e.message}`);
         failPrice++;
       }
+      await fetchPromo(chain.priceStore, Object.keys(branches[chain.id]));
       continue;
     }
     for (const [district, s] of Object.entries(branches[chain.id])) {
@@ -323,10 +367,11 @@ function chooseBranches(chain, stores, existing) {
         console.error(`  ${district}: ${s.store} נכשל - ${e.message}`);
         failPrice++;
       }
+      await fetchPromo(s.store, [district]);
     }
   }
 
   fs.writeFileSync(BRANCHES_FILE, JSON.stringify(branches, null, 2));
-  console.log(`\nסיכום: ${okPrice} קבצי מחירים נמשכו, ${failPrice} נכשלו`);
+  console.log(`\nסיכום: ${okPrice} קבצי מחירים נמשכו, ${failPrice} נכשלו, ${okPromo} קבצי מבצעים`);
   if (!okPrice) process.exit(1);
 })();

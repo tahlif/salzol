@@ -84,6 +84,57 @@ function parseItems(file) {
   return items;
 }
 
+// ---------- מבצעים (PromoFull): קוד → המבצע הזול ביותר שתקף היום ----------
+// pp = מחיר אפקטיבי ליחידת מוצר: DiscountedPrice/MinQty ("2 ב-20" → 10); בלי מחיר - DiscountRate באחוזים
+function parsePromos(file) {
+  let buf;
+  try { buf = fs.readFileSync(file); } catch { return null; }
+  const s = buf[0] === 0xff && buf[1] === 0xfe ? buf.toString('utf16le') : buf.toString('utf8');
+  const out = new Map();
+  const re = /<Promotion>([\s\S]*?)<\/Promotion>/gi;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    const b = m[1];
+    const get = (tag) => {
+      const mm = b.match(new RegExp('<' + tag + '>([^<]*)</' + tag + '>', 'i'));
+      return mm ? mm[1].trim() : '';
+    };
+    const end = (get('PromotionEndDateTime') || get('PromotionEndDate')).slice(0, 10);
+    const start = (get('PromotionStartDateTime') || get('PromotionStartDate')).slice(0, 10);
+    if (!/^\d{4}/.test(end) || end < today || (start && start > today)) continue;
+    if (get('AdditionalIsCoupon') === '1') continue; // קופונים - לא מחיר מדף אמיתי
+    const clubRaw = get('ClubID') || get('ClubId');
+    const club = clubRaw && clubRaw !== '0' ? 1 : 0;
+    const desc = get('PromotionDescription').replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').slice(0, 60);
+    const itemRe = /<PromotionItem>([\s\S]*?)<\/PromotionItem>|<Item>([\s\S]*?)<\/Item>/gi;
+    let im;
+    while ((im = itemRe.exec(b)) !== null) {
+      const ib = im[1] || im[2];
+      const iget = (tag) => {
+        const mm = ib.match(new RegExp('<' + tag + '>([^<]*)</' + tag + '>', 'i'));
+        return mm ? mm[1].trim() : '';
+      };
+      const code = iget('ItemCode');
+      if (!code) continue;
+      const minQ = Math.max(1, Math.round(parseFloat(iget('MinQty')) || 1));
+      const dp = parseFloat(iget('DiscountedPrice'));
+      const rate = parseFloat(iget('DiscountRate'));
+      let pp = null, rr = null;
+      // MinQty>12 = כנראה תקרת מימוש ולא "N ב-X" - חלוקה בו תייצר מחיר שגוי
+      if (isFinite(dp) && dp > 0) {
+        if (minQ > 12) continue; // סמנטיקה דו-משמעית - עדיף בלי מבצע מאשר מבצע שגוי
+        pp = Math.round((dp / minQ) * 100) / 100;
+      } else if (isFinite(rate) && rate > 0 && rate < 100) rr = rate; // אחוז הנחה - מחושב מול מחיר המדף בעת השיוך
+      if (pp == null && rr == null) continue;
+      const rec = { pp, rr, e: end, m: minQ > 1 && minQ <= 12 ? minQ : 0, c: club, d: desc };
+      const prev = out.get(code);
+      // שומרים את הזול ביותר; מבצע לכולם עדיף על מבצע מועדון באותו מחיר
+      if (!prev || (pp != null && (prev.pp == null || pp < prev.pp || (pp === prev.pp && prev.c && !club)))) out.set(code, rec);
+    }
+  }
+  return out;
+}
+
 // ---------- רשימת סניפים מלאה לאתר (כולל קואורדינטות מ-geocode.js אם קיימות) ----------
 let geo = {};
 try { geo = JSON.parse(fs.readFileSync(path.join(__dirname, 'geo.json'), 'utf8')); } catch {}
@@ -276,6 +327,13 @@ for (const d of DISTRICTS) {
   const chainIds = Object.keys(parsed);
   if (chainIds.length < 2) { console.log(`${d.he}: רק ${chainIds.length} רשתות - מדלג`); continue; }
 
+  const promos = {};
+  let promoAttached = 0;
+  for (const id of chainIds) {
+    const pm = parsePromos(path.join(CACHE, `promo-${id}-${d.id}.xml`));
+    if (pm && pm.size) promos[id] = pm;
+  }
+
   // כל המוצרים נכנסים לאינדקס - גם כאלה שרק ברשת אחת (מוצרי חשמל, מותגים פרטיים);
   // ההשוואה והסה"כ ממילא נבנים רק ממה שקיים בכמה רשתות.
   const counts = new Map();
@@ -313,6 +371,18 @@ for (const d of DISTRICTS) {
       if (!it) continue;
       rec.prices[id] = { p: it.price, d: today };
       if (it.t) rec.prices[id].t = it.t; // PriceUpdateTime של הרשת עצמה - "בתוקף מאז" מדויק
+      const pm = promos[id] && promos[id].get(code);
+      if (pm) {
+        const pp = pm.pp != null ? pm.pp : Math.round(it.price * (1 - pm.rr / 100) * 100) / 100;
+        if (pp > 0 && pp < it.price) { // מבצע אמיתי בלבד - זול ממחיר המדף
+          const pr = { p: pp, e: pm.e };
+          if (pm.m) pr.m = pm.m;
+          if (pm.c) pr.c = 1;
+          if (pm.d) pr.d = pm.d;
+          rec.prices[id].pr = pr;
+          promoAttached++;
+        }
+      }
       const h = (rec.history[id] = rec.history[id] || []);
       const last = h[h.length - 1];
       if (!last || last[1] !== it.price) {
@@ -401,7 +471,7 @@ for (const d of DISTRICTS) {
     branches: Object.fromEntries(chainIds.map((id) => [id, branches[id][d.id] ? { name: branches[id][d.id].name, city: branches[id][d.id].city } : null])),
   });
   grandProducts += index.length;
-  console.log(`${d.he}: ${chainIds.length} רשתות, ${index.length} מוצרים, ${changed} שינויי מחיר`);
+  console.log(`${d.he}: ${chainIds.length} רשתות, ${index.length} מוצרים, ${changed} שינויי מחיר, ${promoAttached} מבצעים (${Object.keys(promos).length} רשתות)`);
 }
 
 shrinkEvents.sort((a, b) => (a.d < b.d ? 1 : -1));

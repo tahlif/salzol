@@ -60,6 +60,9 @@
   let basket = [];
   try { basket = JSON.parse(localStorage.getItem('zulik-basket')) || []; } catch {}
   let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
+  let noClub = localStorage.getItem('zulik-noclub') === '1'; // הסתרת מבצעים שדורשים מועדון
+  const esc = (s) => String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const promoTip = (pr) => `${esc(pr.d) || 'מבצע'} · עד ${fmtD(pr.e)}${pr.m ? ` · בקניית ${pr.m} יח'` : ''}${pr.c ? ' · 🎫 מועדון הרשת' : ''}`;
   // שמות מוצרים שנשמרים בין אזורים - כדי ששורת "לא נמכר כאן" תציג שם אמיתי
   let nameMap = {};
   try { nameMap = JSON.parse(localStorage.getItem('zulik-names')) || {}; } catch {}
@@ -498,6 +501,14 @@
     $('sortUnit').textContent = sortByUnit ? '↩ חזרה לסדר שהוספתם' : '↕ מיון לפי מחיר ליחידה';
     await render();
   });
+  const clubBtnText = () => { $('clubToggle').textContent = noClub ? '🎫 מבצעי מועדון מוסתרים' : '🎫 הסתרת מבצעי מועדון'; $('clubToggle').classList.toggle('sel', noClub); };
+  clubBtnText();
+  $('clubToggle').addEventListener('click', async () => {
+    noClub = !noClub;
+    localStorage.setItem('zulik-noclub', noClub ? '1' : '0');
+    clubBtnText();
+    await render();
+  });
   $('favPanel').addEventListener('click', async (ev) => {
     const b = ev.target.closest('[data-fav]');
     if (b) await toggleFav(b.dataset.fav);
@@ -658,7 +669,9 @@
         const arrow = chg ? `<i class="chg ${chg}" data-tip="${chgTip}">${chg === 'cup' ? '▲' : '▼'}</i>` : '';
         const up = unitPrice(p, colRecs[i] && colRecs[i].u);
         const uline = up ? `<small class="unitp">${fmtUShort(up)}</small>` : '';
-        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}${uline}</div>`;
+        const pr = colRecs[i] && colRecs[i].prices[c.chain] && colRecs[i].prices[c.chain].pr;
+        const prLine = pr && !(noClub && pr.c) ? `<small class="promop" data-tip="${promoTip(pr)}">🏷 ${fmt(pr.p)}${pr.c ? '🎫' : ''}</small>` : '';
+        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}${prLine}${uline}</div>`;
       }).join('');
       const pkg = fmtPkg(anyRec.u);
       rows.push({
@@ -739,7 +752,7 @@
     // רשימה מאוחדת: מחיר + היסטוריה בשורה אחת לכל רשת, ממוינת מהזול ליקר
     const histOf = (i, chain) => (colRecs[i] && colRecs[i].history[chain]) || null;
     const tOf = (i, chain) => (colRecs[i] && colRecs[i].prices[chain] && colRecs[i].prices[chain].t) || null;
-    const entries = cols.map((c, i) => ({ label: c.label, p: prices[i], h: histOf(i, c.chain), t: tOf(i, c.chain) }));
+    const entries = cols.map((c, i) => ({ label: c.label, p: prices[i], h: histOf(i, c.chain), t: tOf(i, c.chain), pr: (colRecs[i] && colRecs[i].prices[c.chain] && colRecs[i].prices[c.chain].pr) || null }));
     if (!useFav()) {
       // רשתות שיש להן היסטוריה באזור אבל נשרו מהעמודות היום - מוצגות עם המחיר האחרון הידוע
       const rec = recByDist[district];
@@ -772,7 +785,10 @@
         ? (e.p === best && have.length > 1 ? `<span class="bestpill">${fmt(e.p)}</span>` : fmt(e.p))
         : (e.lastP != null ? `<span class="ghostprice" data-tip="הרשת לא בהשוואה היום - מחיר אחרון ידוע">${fmt(e.lastP)}*</span>` : '—');
       const up = unitPrice(e.p != null ? e.p : e.lastP, cardU);
-      return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}${up ? `<small class="unitp pcunitp">${fmtU(up)}</small>` : ''}</b>${histLine(e.h, e.t)}</div>`;
+      const promoRow = e.pr && !(noClub && e.pr.c)
+        ? `<div class="pcpromo"><span class="promobadge">🏷 במבצע: ${fmt(e.pr.p)}</span> ${esc(e.pr.d)}${e.pr.m ? ` · בקניית ${e.pr.m} יח'` : ''} · עד ${fmtD(e.pr.e)}${e.pr.c ? ' · 🎫 חברי מועדון' : ''}</div>`
+        : '';
+      return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}${up ? `<small class="unitp pcunitp">${fmtU(up)}</small>` : ''}</b>${histLine(e.h, e.t)}${promoRow}</div>`;
     }).join('');
     const availHtml = Object.keys(avail).length
       ? Object.keys(avail).sort((a, b) => avail[b].length - avail[a].length).map((ch) => {
