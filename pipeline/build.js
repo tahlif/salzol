@@ -361,7 +361,13 @@ for (const d of DISTRICTS) {
     const rec = shard[code] || { prices: {}, history: {} };
     rec.name = globalName.get(code) || rec.name || code; // שם קנוני אחיד בכל הארץ
     rec.prices = {};
-    for (const k of Object.keys(rec.history)) if (!CHAIN_SET.has(k)) delete rec.history[k]; // רשתות שהוסרו (דור אלון) לא נגררות
+    for (const k of Object.keys(rec.history)) {
+      if (!CHAIN_SET.has(k)) { delete rec.history[k]; continue; } // רשתות שהוסרו (דור אלון) לא נגררות
+      // ריצות מקבילות בעבר הכניסו רשומות שלא לפי סדר זמן - ממיינים ומאחדים מחיר זהה עוקב
+      const h = rec.history[k];
+      h.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+      for (let i = h.length - 1; i > 0; i--) if (h[i][1] === h[i - 1][1]) h.splice(i, 1);
+    }
     applyUnit(rec, code);
     const mc = globalCountry.get(code); if (mc) rec.mc = mc;
     const mf = globalBrand.get(code); if (mf) rec.mf = mf;

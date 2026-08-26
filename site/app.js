@@ -624,6 +624,7 @@
     // מעל 7 עמודות - רוחב קבוע וגלילה אופקית בתוך הכרטיס
     const narrow = cols.length > 7 || matchMedia('(max-width: 640px)').matches;
     $('basketCard').style.setProperty('--pcols', narrow ? `repeat(${cols.length}, 64px)` : `repeat(${cols.length}, minmax(56px, 84px))`);
+    $('basketCard').classList.toggle('narrowcols', narrow); // תגי מחיר מהודקים שלא ייחתכו ב-64px
     $('thead').innerHTML = `<div class="pname">מוצר</div>` + cols.map((c) => `<div>${c.head}</div>`).join('') + '<div></div>';
 
     const dists = [...new Set(cols.map((c) => c.dist))];

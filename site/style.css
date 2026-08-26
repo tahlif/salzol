@@ -378,3 +378,8 @@ footer a { color: var(--text-2); }
 .row .pname { margin-top: 1px; }
 .row .price { margin-top: 5px; }
 .row .rmv { margin-top: 7px; }
+/* עמודות צרות (מובייל / 8+ רשתות): התג חייב להיכנס ב-64px כדי שחץ השינוי לא ייחתך */
+.pval { white-space: nowrap; }
+.narrowcols .price .pval { padding: 2.5px 3px; font-size: 12.5px; }
+.narrowcols .price .unitp { font-size: 9px; }
+.narrowcols .price .promop { font-size: 9.5px; }
