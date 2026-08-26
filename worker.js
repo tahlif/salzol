@@ -53,10 +53,95 @@ async function isAdmin(env, s) {
   return !!(u && u.role === 'admin');
 }
 
+// חשבונות מייל+סיסמה: sub = 'local:<email>'; הסיסמה נשמרת כ-PBKDF2 (מלח אקראי, 100K איטרציות)
+const emailKey = (email) => 'user:local:' + String(email || '').trim().toLowerCase();
+const validEmail = (e) => /^\S+@\S+\.\S+$/.test(String(e || '').trim());
+async function hashPassword(password, saltB64, iterations = 100000) {
+  const salt = saltB64 ? Uint8Array.from(atob(saltB64), (c) => c.charCodeAt(0)) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, 256);
+  return { s: btoa(String.fromCharCode(...salt)), i: iterations, h: b64url(bits) };
+}
+const userOut = (env, u) => ({ email: u.email, name: u.name, picture: u.picture || '', admin: isRootAdmin(env, u.email) || u.role === 'admin' });
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+
+    // הרשמה עם מייל וסיסמה (מתחבר אוטומטית אחרי ההרשמה)
+    if (url.pathname === '/api/register' && request.method === 'POST') {
+      let b = {};
+      try { b = await request.json(); } catch {}
+      const email = String(b.email || '').trim().toLowerCase();
+      const name = String(b.name || '').trim().slice(0, 60);
+      if (!validEmail(email)) return json({ error: 'bad-email' }, 400);
+      if (!name) return json({ error: 'missing-name' }, 400);
+      if (String(b.password || '').length < 6) return json({ error: 'weak-password' }, 400);
+      const key = emailKey(email);
+      if (await env.USERS.get(key)) return json({ error: 'exists' }, 409);
+      const user = {
+        sub: 'local:' + email, email, name, picture: '',
+        created: new Date().toISOString(), lastLogin: new Date().toISOString(), logins: 1, role: '',
+        ph: await hashPassword(b.password),
+      };
+      await env.USERS.put(key, JSON.stringify(user));
+      const session = await makeSession(env, user);
+      return json({ user: userOut(env, user) }, 200, { 'set-cookie': sessionCookie(session, SESSION_DAYS * 86400) });
+    }
+
+    // כניסה עם מייל וסיסמה
+    if (url.pathname === '/api/login-pass' && request.method === 'POST') {
+      let b = {};
+      try { b = await request.json(); } catch {}
+      const u = validEmail(b.email) ? await env.USERS.get(emailKey(b.email), 'json') : null;
+      if (!u || !u.ph) return json({ error: 'bad-credentials' }, 401);
+      const attempt = await hashPassword(String(b.password || ''), u.ph.s, u.ph.i);
+      if (attempt.h !== u.ph.h) return json({ error: 'bad-credentials' }, 401);
+      u.lastLogin = new Date().toISOString();
+      u.logins = (u.logins || 0) + 1;
+      await env.USERS.put(emailKey(u.email), JSON.stringify(u));
+      const session = await makeSession(env, u);
+      return json({ user: userOut(env, u) }, 200, { 'set-cookie': sessionCookie(session, SESSION_DAYS * 86400) });
+    }
+
+    // שכחתי סיסמה: יוצר טוקן לשעה ושולח מייל (Resend) - בלי לחשוף אם החשבון קיים
+    if (url.pathname === '/api/reset-request' && request.method === 'POST') {
+      let b = {};
+      try { b = await request.json(); } catch {}
+      if (!env.RESEND_API_KEY) return json({ error: 'reset-not-available' }, 503);
+      const u = validEmail(b.email) ? await env.USERS.get(emailKey(b.email), 'json') : null;
+      if (u) {
+        const token = b64url(crypto.getRandomValues(new Uint8Array(24)));
+        await env.USERS.put('reset:' + token, u.sub, { expirationTtl: 3600 });
+        const link = url.origin + '/?reset=' + token;
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            from: env.RESET_FROM || 'onboarding@resend.dev', to: u.email,
+            subject: 'איפוס סיסמה - סַלְזוֹל',
+            html: `<div dir="rtl">לחצו לאיפוס הסיסמה (תקף לשעה): <a href="${link}">${link}</a></div>`,
+          }),
+        }).catch(() => {});
+      }
+      return json({ ok: true });
+    }
+
+    // קביעת סיסמה חדשה מתוך קישור האיפוס
+    if (url.pathname === '/api/reset-confirm' && request.method === 'POST') {
+      let b = {};
+      try { b = await request.json(); } catch {}
+      if (String(b.password || '').length < 6) return json({ error: 'weak-password' }, 400);
+      const sub = b.token ? await env.USERS.get('reset:' + b.token) : null;
+      if (!sub) return json({ error: 'bad-token' }, 400);
+      const u = await env.USERS.get('user:' + sub, 'json'); // sub של חשבון מקומי הוא 'local:<email>'
+      if (!u) return json({ error: 'bad-token' }, 400);
+      u.ph = await hashPassword(b.password);
+      await env.USERS.put('user:' + u.sub, JSON.stringify(u));
+      await env.USERS.delete('reset:' + b.token);
+      return json({ ok: true });
+    }
 
     if (url.pathname === '/api/login' && request.method === 'POST') {
       if (!env.GOOGLE_CLIENT_ID) return json({ error: 'login-not-configured' }, 503);
@@ -107,6 +192,7 @@ export default {
             sub: u.sub, email: u.email, name: u.name, picture: u.picture,
             created: u.created, lastLogin: u.lastLogin, logins: u.logins || 1,
             role: isRootAdmin(env, u.email) ? 'root' : (u.role || ''),
+            prov: String(u.sub || '').startsWith('local:') ? 'מייל' : 'Google',
           });
         }
         cursor = page.list_complete ? null : page.cursor;

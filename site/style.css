@@ -419,3 +419,29 @@ footer a { color: var(--text-2); }
 .authpop .authtitle { margin: 0 0 10px; font-size: 13.5px; font-weight: 600; }
 .authpop small { display: block; margin-top: 10px; color: var(--text-3); font-size: 11.5px; }
 .sgfavall { background: #fdf3d8; border-radius: 999px; padding: 1px 8px; }
+/* מודל התחברות + המבורגר */
+.authbox2 { max-width: 360px; padding: 22px 24px; }
+.authbox2 h3 { margin: 0 0 14px; font-size: 18px; }
+.authbox2 input { width: 100%; margin-bottom: 10px; padding: 10px 12px; font: inherit; font-size: 14.5px;
+  border: 0.5px solid var(--border-strong); border-radius: var(--radius); outline: none; background: var(--surface); color: var(--text); }
+.authbox2 input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--good-bg); }
+.authsubmit { width: 100%; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  background: var(--accent); color: #fff; border: 0; border-radius: var(--radius); padding: 10px; }
+.authsubmit:hover { filter: brightness(1.05); }
+.authsubmit:disabled { opacity: .6; }
+.authlinks { margin: 12px 0 0; font-size: 13.5px; text-align: center; color: var(--text-2); }
+.authlinks a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.autherr { margin: 0 0 10px; font-size: 13px; color: #a32d2d; background: #fcebeb; border-radius: 8px; padding: 7px 10px; }
+.authnote { margin: 0 0 10px; font-size: 13.5px; color: var(--text-2); }
+.authdiv { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; color: var(--text-3); font-size: 12.5px; }
+.authdiv::before, .authdiv::after { content: ''; flex: 1; border-top: 0.5px solid var(--border); }
+.hamb { font-size: 20px; cursor: pointer; background: var(--surface); border: 0.5px solid var(--border-strong);
+  border-radius: 10px; padding: 3px 11px; color: var(--text); line-height: 1.4; }
+.menupop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 200; background: var(--surface);
+  border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: 0 10px 28px rgba(0,0,0,.15); min-width: 220px; overflow: hidden; }
+.menuhead { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 0.5px solid var(--border); }
+.menuhead img { width: 34px; height: 34px; border-radius: 50%; }
+.menuhead small { display: block; color: var(--text-3); font-size: 11.5px; direction: ltr; text-align: right; }
+.menuitem { display: block; width: 100%; text-align: right; font: inherit; font-size: 14px; color: var(--text);
+  background: none; border: 0; padding: 10px 14px; cursor: pointer; text-decoration: none; }
+.menuitem:hover { background: var(--surface-2); }

@@ -51,54 +51,111 @@
     toastTimer = setTimeout(() => { toast.hidden = true; }, 6000);
   }
 
+  // ---------- מודל התחברות: מייל+סיסמה, הרשמה, שכחתי סיסמה + כפתור גוגל ----------
+  const authModal = $('authModal');
+  const AUTH_ERRS = {
+    'bad-credentials': 'אימייל או סיסמה שגויים.', exists: 'כבר קיים חשבון עם האימייל הזה - נסו להתחבר.',
+    'bad-email': 'כתובת אימייל לא תקינה.', 'weak-password': 'הסיסמה קצרה מדי - לפחות 6 תווים.',
+    'missing-name': 'חסר שם.', 'bad-token': 'קישור האיפוס פג תוקף - בקשו קישור חדש.',
+    'reset-not-available': 'איפוס במייל יופעל בקרוב. בינתיים היכנסו עם Google, או כתבו לנו: contact@salzol.com',
+  };
+  function authView(view, resetToken) {
+    const F = {
+      login: `<h3>התחברות לסַלְזוֹל</h3>
+        <input type="email" id="afEmail" placeholder="אימייל" autocomplete="email">
+        <input type="password" id="afPass" placeholder="סיסמה" autocomplete="current-password">
+        <p class="autherr" id="afErr" hidden></p>
+        <button class="authsubmit" id="afGo">התחברות</button>
+        <p class="authlinks"><a href="#" data-v="register">להרשמה</a> · <a href="#" data-v="forgot">שכחתי סיסמה</a></p>
+        <div class="authdiv"><span>או</span></div><div id="gsiBtn"></div>`,
+      register: `<h3>הרשמה לסַלְזוֹל</h3>
+        <input type="text" id="afName" placeholder="שם" autocomplete="name">
+        <input type="email" id="afEmail" placeholder="אימייל" autocomplete="email">
+        <input type="password" id="afPass" placeholder="סיסמה (לפחות 6 תווים)" autocomplete="new-password">
+        <p class="autherr" id="afErr" hidden></p>
+        <button class="authsubmit" id="afGo">הרשמה</button>
+        <p class="authlinks">כבר רשומים? <a href="#" data-v="login">התחברות</a></p>
+        <div class="authdiv"><span>או</span></div><div id="gsiBtn"></div>`,
+      forgot: `<h3>איפוס סיסמה</h3>
+        <p class="authnote">נשלח לכם קישור איפוס לאימייל:</p>
+        <input type="email" id="afEmail" placeholder="אימייל" autocomplete="email">
+        <p class="autherr" id="afErr" hidden></p>
+        <button class="authsubmit" id="afGo">שליחת קישור</button>
+        <p class="authlinks"><a href="#" data-v="login">חזרה להתחברות</a></p>`,
+      newpass: `<h3>סיסמה חדשה</h3>
+        <input type="password" id="afPass" placeholder="סיסמה חדשה (לפחות 6 תווים)" autocomplete="new-password">
+        <p class="autherr" id="afErr" hidden></p>
+        <button class="authsubmit" id="afGo">שמירה</button>`,
+    };
+    $('authViews').innerHTML = F[view];
+    $('authViews').querySelectorAll('[data-v]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); authView(a.dataset.v); }));
+    const err = (code) => { const el = $('afErr'); el.textContent = AUTH_ERRS[code] || 'משהו השתבש - נסו שוב.'; el.hidden = false; };
+    const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (x) => ({ ok: x.ok, j: await x.json().catch(() => ({})) }));
+    const loggedIn = (user, msg) => { me = user; authModal.hidden = true; renderAuthUI(); showToast(msg || `ברוכים הבאים, ${me.name}! עכשיו אפשר עד 5 סניפים ועד 100 מוצרים.`); };
+    $('afGo').addEventListener('click', async () => {
+      $('afGo').disabled = true;
+      let r;
+      if (view === 'login') r = await post('/api/login-pass', { email: $('afEmail').value, password: $('afPass').value });
+      else if (view === 'register') r = await post('/api/register', { name: $('afName').value, email: $('afEmail').value, password: $('afPass').value });
+      else if (view === 'forgot') r = await post('/api/reset-request', { email: $('afEmail').value });
+      else r = await post('/api/reset-confirm', { token: resetToken, password: $('afPass').value });
+      $('afGo').disabled = false;
+      if (!r.ok) { err(r.j.error); return; }
+      if (view === 'forgot') { showToast('אם קיים חשבון עם האימייל הזה - נשלח אליו קישור איפוס.'); authModal.hidden = true; }
+      else if (view === 'newpass') { showToast('הסיסמה עודכנה! התחברו עם הסיסמה החדשה.'); authView('login'); }
+      else loggedIn(r.j.user);
+    });
+    if (googleCid && $('gsiBtn')) {
+      const tryRender = () => {
+        if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(tryRender, 300); return; }
+        google.accounts.id.initialize({
+          client_id: googleCid,
+          callback: async (resp) => {
+            const r = await post('/api/login', { credential: resp.credential });
+            if (r.ok && r.j.user) loggedIn(r.j.user);
+            else err();
+          },
+        });
+        if ($('gsiBtn')) google.accounts.id.renderButton($('gsiBtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'he' });
+      };
+      tryRender();
+    }
+  }
+  $('authClose').addEventListener('click', () => { authModal.hidden = true; });
+  authModal.addEventListener('click', (ev) => { if (ev.target === authModal) authModal.hidden = true; });
+  authModal.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && $('afGo')) $('afGo').click(); });
+
   function renderAuthUI() {
     const box = $('authBox');
     if (!box) return;
     if (me) {
-      box.innerHTML = `${me.admin ? '<a class="adminlink" href="admin.html">🛠 ניהול</a>' : ''}
-        <span class="userchip">${me.picture ? `<img src="${me.picture}" alt="">` : ''}<b>${me.name}</b></span>
-        <button class="linkbtn" id="logoutBtn">התנתקות</button>`;
+      // מחובר: המבורגר עם דרופדאון - שם, ניהול (לאדמין) והתנתקות
+      box.innerHTML = `<button class="hamb" id="menuBtn" aria-label="תפריט">☰</button>
+        <div class="menupop" id="menuPop" hidden>
+          <div class="menuhead">${me.picture ? `<img src="${me.picture}" alt="">` : ''}<div><b>${me.name}</b><small>${me.email}</small></div></div>
+          ${me.admin ? '<a class="menuitem" href="admin.html">🛠 פאנל ניהול</a>' : ''}
+          <button class="menuitem" id="logoutBtn">התנתקות</button>
+        </div>`;
+      const pop = box.querySelector('#menuPop');
+      box.querySelector('#menuBtn').addEventListener('click', (ev) => { ev.stopPropagation(); pop.hidden = !pop.hidden; });
+      document.addEventListener('click', (ev) => { if (!pop.hidden && !ev.target.closest('#authBox')) pop.hidden = true; });
       box.querySelector('#logoutBtn').addEventListener('click', async () => {
         await fetch('/api/logout', { method: 'POST' });
         me = null;
         renderAuthUI();
         showToast('התנתקת. בחינם: עד 2 סניפים ו-5 מוצרים בהשוואה.');
       });
-    } else if (googleCid) {
-      // כפתור "התחברות" שלנו; לחיצה פותחת חלונית עם כפתור גוגל הרשמי
-      // (שמציג את שם חשבון הגוגל של הגולש כשיש לו סשן בדפדפן)
-      box.innerHTML = `<button class="loginbtn" id="loginOpen">התחברות</button>
-        <div class="authpop" id="authPop" hidden>
-          <p class="authtitle">מתחברים לסַלְזוֹל עם חשבון Google:</p>
-          <div id="gsiBtn"></div>
-          <small>מחוברים משווים עד 5 סניפים ועד 100 מוצרים - בחינם</small>
-        </div>`;
-      const pop = box.querySelector('#authPop');
-      box.querySelector('#loginOpen').addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        pop.hidden = !pop.hidden;
+    } else {
+      box.innerHTML = '<button class="loginbtn" id="loginOpen">התחברות</button>';
+      box.querySelector('#loginOpen').addEventListener('click', () => {
+        authModal.hidden = false;
+        authView('login');
       });
-      document.addEventListener('click', (ev) => {
-        if (!pop.hidden && !ev.target.closest('#authBox')) pop.hidden = true;
-      });
-      const tryRender = () => {
-        if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(tryRender, 300); return; }
-        google.accounts.id.initialize({
-          client_id: googleCid,
-          callback: async (resp) => {
-            const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential: resp.credential }) }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
-            if (r && r.user) {
-              me = r.user;
-              renderAuthUI();
-              showToast(`ברוכים הבאים, ${me.name}! עכשיו אפשר עד 5 סניפים ועד 100 מוצרים בהשוואה.`);
-            } else showToast('ההתחברות נכשלה - נסו שוב.');
-          },
-        });
-        google.accounts.id.renderButton(document.getElementById('gsiBtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'he' });
-      };
-      tryRender();
-    } else box.innerHTML = ''; // התחברות עוד לא הוגדרה בשרת
+    }
   }
+  // כניסה מקישור איפוס סיסמה (?reset=<token>)
+  const resetTok = new URLSearchParams(location.search).get('reset');
+  if (resetTok) { authModal.hidden = false; authView('newpass', resetTok); }
 
   const [meta, chainsAll, sample, storesAll, cbsCities] = await Promise.all([
     fetch('data/meta.json').then((r) => r.json()),
@@ -567,7 +624,7 @@
         <div id="favResults" class="favresults"></div>`;
       el.querySelector('#favSearch').addEventListener('input', (e) => { favQuery = e.target.value.trim(); renderFavResults(); });
     }
-    el.querySelector('.favhint').textContent = `בחרו עד ${LIMITS().favs} סניפים מכל ${allBranches.length} הסניפים בארץ — כאן או דרך ⭐ בחלונית של סיכה במפה. המחיר לכל סניף נלקח מסניף-הבסיס של הרשת באזור שלו.${me ? '' : ' (בחינם: עד 2 - התחברו לעד 5)'}`;
+    el.querySelector('.favhint').textContent = `בחרו עד ${LIMITS().favs} סניפים מכל ${allBranches.length} הסניפים בארץ — כאן או דרך ⭐ בחלונית של סיכה במפה.`;
     renderFavSel();
     renderFavResults();
   }
@@ -598,7 +655,7 @@
     $('tabRegion').classList.toggle('active', mode === 'region');
     $('tabFav').classList.toggle('active', mode === 'fav');
     $('modeNote').textContent = useFav()
-      ? `${n} סניפים נבחרו — הבחירה במפה לא משפיעה`
+      ? ''
       : (mode === 'fav' ? 'בחרו לפחות 2 סניפים (כאן או דרך ⭐ בסיכה במפה)' : '');
   }
   async function setMode(m) {

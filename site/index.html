@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?b=49">
+<link rel="stylesheet" href="style.css?b=50">
 </head>
 <body>
 <header class="siteheader">
@@ -89,6 +89,12 @@
   </div>
   <div class="wrap ftrcopy">© 2026 כל הזכויות שמורות לסַלְזוֹל</div>
 </footer>
+<div id="authModal" class="pcard" hidden>
+  <div class="pcbox authbox2" role="dialog" aria-modal="true">
+    <button class="pcclose" id="authClose" aria-label="סגירה">✕</button>
+    <div id="authViews"></div>
+  </div>
+</div>
 <div id="pcard" class="pcard" hidden>
   <div class="pcbox" role="dialog" aria-modal="true">
     <button class="pcclose" id="pcClose" aria-label="סגירה">✕</button>
@@ -97,6 +103,6 @@
 </div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?b=49"></script>
+<script src="app.js?b=50"></script>
 </body>
 </html>
