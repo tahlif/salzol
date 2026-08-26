@@ -732,6 +732,7 @@
       <details class="pcdet"><summary>איפה המוצר נמכר</summary>${availHtml}</details>
       <p class="hnote">המחירים נכונים לעדכון האחרון: ${updatedLabel}</p>`;
     $('pcard').hidden = false;
+    document.body.style.overflow = 'hidden'; // הגלילה בקארד לא תזיז את העמוד
     // תמונה גדולה
     if (code.startsWith('v-')) {
       const t = $('pcBody').querySelector('.pcimg');
@@ -801,9 +802,9 @@
       if (thumbUrl(t)) openImgZoom(thumbUrl(t));
     }
   });
-  $('pcClose').addEventListener('click', () => { $('pcard').hidden = true; });
-  $('pcard').addEventListener('click', (ev) => { if (ev.target === $('pcard')) $('pcard').hidden = true; });
-  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') $('pcard').hidden = true; });
+  $('pcClose').addEventListener('click', () => { $('pcard').hidden = true; document.body.style.overflow = ''; });
+  $('pcard').addEventListener('click', (ev) => { if (ev.target === $('pcard')) $('pcard').hidden = true; document.body.style.overflow = ''; });
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') $('pcard').hidden = true; document.body.style.overflow = ''; });
 
   $('rows').addEventListener('click', async (ev) => {
     const rm = ev.target.closest('[data-rm]');

@@ -331,3 +331,4 @@ footer a { color: var(--text-2); }
   #realmap { height: 200px; }
   .ftrlinks { text-align: right; }
 }
+.pcbox, .pcard, #imgzoom { overscroll-behavior: contain; }
