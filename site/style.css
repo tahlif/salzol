@@ -462,3 +462,4 @@ footer a { color: var(--text-2); }
 .gslot:hover .gbtn { background: var(--surface-2); }
 .gsireal { position: absolute; inset: 0; opacity: 0.001; overflow: hidden; }
 .gsireal > div, .gsireal iframe { width: 100% !important; height: 46px !important; }
+.gsireal iframe { margin: 0 !important; }
