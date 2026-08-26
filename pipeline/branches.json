@@ -82,7 +82,7 @@
     "jerusalem": {
       "store": "049",
       "name": "בית שמש",
-      "city": "יגאל אלון",
+      "city": "",
       "address": "יגאל אלון 4",
       "district": "jerusalem"
     },
@@ -196,10 +196,10 @@
       "district": "south"
     },
     "yosh": {
-      "store": "027",
-      "name": "יד אליהו",
-      "city": "יגאל אלון",
-      "address": "יגאל אלון 57",
+      "store": "046",
+      "name": "מישור אדומים",
+      "city": "",
+      "address": "unknown",
       "district": "yosh"
     }
   },
@@ -388,13 +388,6 @@
       "city": "",
       "address": "ילדי טהרן 7",
       "district": "center"
-    },
-    "south": {
-      "store": "012",
-      "name": "יהלום",
-      "city": "שדרות לנטוס",
-      "address": "שדרות לנטוס 10",
-      "district": "south"
     }
   },
   "politzer": {
@@ -483,7 +476,7 @@
     "center": {
       "store": "019",
       "name": "רמלה",
-      "city": "שדרות הרצל",
+      "city": "",
       "address": "שדרות הרצל, קריית הממשלה 91",
       "district": "center"
     },
@@ -654,7 +647,7 @@
     "south": {
       "store": "017",
       "name": "אשדוד סיטי",
-      "city": "קניון הסיטי שדרות מנחם בגין",
+      "city": "",
       "address": "קניון הסיטי שדרות מנחם בגין 0",
       "district": "south"
     },
