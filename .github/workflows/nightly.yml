@@ -46,9 +46,10 @@ jobs:
         run: |
           git config user.name "zolli-bot"
           git config user.email "actions@github.com"
-          git add site/data pipeline/geo.json pipeline/branches.json pipeline/osm-pois.json
+          git add site/data pipeline/geo.json pipeline/branches.json pipeline/osm-pois.json \
+                  pipeline/city-geo.json pipeline/city-geo-google.json pipeline/top200.json pipeline/geo-report.txt
           git diff --cached --quiet || git commit -m "עדכון מחירים יומי $(date +%d.%m.%Y)"
-          git pull --rebase origin main   # חסינות מפני push מקביל בזמן הריצה
+          git pull --rebase --autostash origin main   # חסינות מפני push מקביל + קבצי עזר לא-מוסטים
           git push
 
       - name: פריסה ל-Cloudflare (push מתוך Action לא מפעיל workflow אחר - לכן פורסים כאן)
