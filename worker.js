@@ -11,7 +11,8 @@ const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
 
 const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const b64urlToStr = (s) => atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+// פענוח כ-UTF-8 אמיתי - atob לבדו מפרש בייטים כ-latin1 והורס שמות בעברית
+const b64urlToStr = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0)));
 
 async function hmac(secret, data) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
