@@ -668,10 +668,11 @@
         const chgTip = chg ? `${chg === 'cup' ? 'התייקר' : 'הוזל'} מ-${fmt(h[h.length - 2][1])} ב-${fmtD(chgDate)}${chgDate === meta.updated && upTime ? ' בשעה ' + upTime : ''}` : '';
         const arrow = chg ? `<i class="chg ${chg}" data-tip="${chgTip}">${chg === 'cup' ? '▲' : '▼'}</i>` : '';
         const up = unitPrice(p, colRecs[i] && colRecs[i].u);
-        const uline = up ? `<small class="unitp">${fmtUShort(up)}</small>` : '';
+        const uline = up ? `<small class="unitp"><bdi>${fmtUShort(up)}</bdi></small>` : '';
         const pr = colRecs[i] && colRecs[i].prices[c.chain] && colRecs[i].prices[c.chain].pr;
         const prLine = pr && !(noClub && pr.c) ? `<small class="promop" data-tip="${promoTip(pr)}">🏷 ${fmt(pr.p)}${pr.c ? '🎫' : ''}</small>` : '';
-        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}">${isBest ? `<span>${fmt(p)}${arrow}</span>` : fmt(p) + arrow}${prLine}${uline}</div>`;
+        // כל תא באותו מבנה בדיוק (pval תמיד) - גבהים אחידים, והתג הכחול לא גולש על השורות שמתחת
+        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}"><span class="pval">${fmt(p)}${arrow}</span>${prLine}${uline}</div>`;
       }).join('');
       const pkg = fmtPkg(anyRec.u);
       rows.push({
@@ -694,7 +695,7 @@
       const bestT = Math.min(...totals);
       const worstT = Math.max(...totals);
       totalsEl.innerHTML = `<div class="pname">סה"כ (${comparable} מוצרים ${useFav() ? 'בכל הסניפים' : 'בכל הרשתות'})</div>
-        <div class="prices-m">${cols.map((c, i) => `<div class="price ${totals[i] === bestT ? 'best' : ''}" data-chain="${c.label}">${totals[i] === bestT ? `<span>${fmt(totals[i])}</span>` : fmt(totals[i])}</div>`).join('')}</div><div></div>`;
+        <div class="prices-m">${cols.map((c, i) => `<div class="price ${totals[i] === bestT ? 'best' : ''}" data-chain="${c.label}"><span class="pval">${fmt(totals[i])}</span></div>`).join('')}</div><div></div>`;
       totalsEl.hidden = false;
       const bestCol = cols[totals.indexOf(bestT)];
       const pct = worstT > 0 ? Math.round(((worstT - bestT) / worstT) * 100) : 0;
@@ -788,7 +789,8 @@
       const promoRow = e.pr && !(noClub && e.pr.c)
         ? `<div class="pcpromo"><span class="promobadge">🏷 במבצע: ${fmt(e.pr.p)}</span> ${esc(e.pr.d)}${e.pr.m ? ` · בקניית ${e.pr.m} יח'` : ''} · עד ${fmtD(e.pr.e)}${e.pr.c ? ' · 🎫 חברי מועדון' : ''}</div>`
         : '';
-      return `<div class="pcprice"><span class="pclabel">${e.label}</span><b>${priceHtml}${up ? `<small class="unitp pcunitp">${fmtU(up)}</small>` : ''}</b>${histLine(e.h, e.t)}${promoRow}</div>`;
+      // מחיר ומחיר-ליחידה בעמודה נפרדת אחד מעל השני, עם bdi - בלי ערבוב bidi של המספרים
+      return `<div class="pcprice"><span class="pclabel">${e.label}</span><span class="pcval"><b>${priceHtml}</b>${up ? `<small class="unitp pcunitp"><bdi>${fmtU(up)}</bdi></small>` : ''}</span>${histLine(e.h, e.t)}${promoRow}</div>`;
     }).join('');
     const availHtml = Object.keys(avail).length
       ? Object.keys(avail).sort((a, b) => avail[b].length - avail[a].length).map((ch) => {
@@ -820,7 +822,7 @@
           const bits = [];
           const pkg = fmtPkg(cardU);
           if (pkg) bits.push(pkg);
-          if (best != null) { const up = unitPrice(best, cardU); if (up) bits.push(fmtU(up)); }
+          if (best != null) { const up = unitPrice(best, cardU); if (up) bits.push(`<bdi>${fmtU(up)}</bdi>`); }
           if (cardRec && cardRec.mf) bits.push(cardRec.mf);
           if (cardRec && cardRec.mc && flagOf(cardRec.mc)) bits.push(`${flagOf(cardRec.mc)} ${COUNTRY_NAME[cardRec.mc] || cardRec.mc}`);
           const meta1 = bits.length ? `<p class="pcmeta">${bits.join(' · ')}</p>` : '';

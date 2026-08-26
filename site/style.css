@@ -204,10 +204,12 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .favres:hover { background: var(--surface); color: var(--text); }
 .price { text-align: center; font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .price.best { }
-.price.best span, .bestpill {
+/* מבנה אחיד לכל תא: pval תמיד עם אותו padding (inline-block - הרקע לא גולש על שורת המחיר-ליחידה) */
+.price .pval { display: inline-block; padding: 2.5px 9px; border-radius: var(--radius); }
+.price.best .pval, .bestpill {
   background: var(--good-bg); color: var(--good-text); font-weight: 500;
-  padding: 2.5px 9px; border-radius: var(--radius);
 }
+.bestpill { display: inline-block; padding: 2.5px 9px; border-radius: var(--radius); }
 .price.missing { color: var(--text-3); }
 .rmv {
   border: 0; background: none; color: var(--text-3); cursor: pointer;
@@ -368,3 +370,11 @@ footer a { color: var(--text-2); }
 .promobadge { color: #b3552e; font-weight: 600; }
 .pcprice { flex-wrap: wrap; }
 .sortbar { gap: 14px; }
+/* קארד: מחיר ומחיר-ליחידה בעמודה, מיושרים לקצה */
+.pcval { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+.pcval .pcunitp { display: block; margin: 0; font-size: 11px; }
+/* שורות עם מספר שונה של תתי-שורות (מבצע/יחידה): כל המחירים מיושרים לאותו קו עליון */
+.row { align-items: start; }
+.row .pname { margin-top: 1px; }
+.row .price { margin-top: 5px; }
+.row .rmv { margin-top: 7px; }
