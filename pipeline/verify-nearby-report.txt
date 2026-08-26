@@ -1,0 +1,333 @@
+MOVED shufersal:232 שלי צפת- מ.מסחר רמת רזים (?) 4.8km
+MOVED shufersal:093 שלי יהוד- סביונים (יהוד) 2.2km
+UNVERIFIED shufersal:036 שלי כ"ס- רוטשילד (?)
+MOVED shufersal:024 שלי אשדוד- הנביאים (אשדוד) 0.0km
+MOVED shufersal:017 שלי חיפה- חורב (חיפה) 2.6km
+MOVED shufersal:760 שלי ראש העין (ראש העין) 3.1km
+MOVED shufersal:306 יש נוה שאנן חיפה- חניתה (חיפה) 0.7km
+UNVERIFIED shufersal:207 יש אור יהודה - אליהו סעדו (אור יהודה)
+MOVED shufersal:078 יש הר נוף ירושלים-שאולזו (ירושלים) 2.9km
+MOVED shufersal:021 יש מרים ירושלים-  פארן (ירושלים) 5.0km
+MOVED shufersal:843 גוד מרקט בית שמש (בית שמש) 6.2km
+MOVED shufersal:778 GOOD MARKET אהליאב ירושלים (ירושלים) 4.7km
+UNVERIFIED shufersal:773 GOOD MARKET אהבת שלום בית שמש (בית שמש)
+MOVED shufersal:772 גוד מרקט מאה שערים (?) 48.0km
+MOVED shufersal:753 גוד מרקט רש"י ירושלים (ירושלים) 3.8km
+MOVED shufersal:750 גוד מרקט שירת הים (?) 88.6km
+MOVED shufersal:734 גוד מרקט גאולה חיפה (חיפה) 2.9km
+MOVED shufersal:789 גוד מרקט אופקים (אופקים) 2.0km
+MOVED shufersal:854 דיל גבעת אלונים (אלונים) 10.5km
+MOVED shufersal:320 דיל האגס (?) 49.9km
+UNVERIFIED shufersal:290 דיל  פ"ת- יכין סנטר (?)
+MOVED shufersal:254 דיל כרמי גת (?) 230.9km
+MOVED shufersal:189 דיל פרדס חנה (פרדס חנה) 0.4km
+MOVED shufersal:187 דיל קניון מעלה אדומים (מעלה אדומים) 3.8km
+MOVED shufersal:183 דיל אשדוד- הרצל (אשדוד) 0.4km
+MOVED shufersal:180 דיל ק.מוצקין- בן גוריון (?) 88.9km
+MOVED shufersal:174 דיל ערד- קניון (?) 85.3km
+UNVERIFIED shufersal:152 דיל ערד- ישפרו המנוף (?)
+MOVED shufersal:095 דיל חדרה- קניוןאורות (חדרה) 6.9km
+MOVED shufersal:077 דיל  חריש (חריש) 0.5km
+MOVED shufersal:018 דיל חולון-קרן היסוד (חולון) 1.8km
+UNVERIFIED shufersal:448 שערי רווחה (רווחה)
+MOVED shufersal:176 שערי רווחה ירושלים (ירושלים) 6.5km
+UNVERIFIED shufersal:161 המפיץ סיטונאות אשדוד (אשדוד)
+MOVED shufersal:782 BE ראשון לציון (ראשון לציון) 4.2km
+UNVERIFIED shufersal:764 BE סטאר אשדוד (אשדוד)
+MOVED shufersal:763 BE שפרעם (שפרעם) 4.2km
+MOVED shufersal:715 BE אגמים (?) 4.2km
+UNVERIFIED shufersal:713 BE אור ים (רימונים)
+MOVED shufersal:697 BE  ירכא (ירכא) 12.6km
+UNVERIFIED shufersal:696 BE מדיקל-אלעד (אלעד)
+UNVERIFIED shufersal:691 Be (פ.י) אשדוד מדיקל (אשדוד)
+MOVED shufersal:688 BE  מדיקל-בלינסון פ"ת (?) 1.5km
+UNVERIFIED shufersal:685 BE  אזורי חן (?)
+UNVERIFIED shufersal:684 Be  שדרות (?)
+MOVED shufersal:681 BE שהם (שוהם) 0.9km
+MOVED shufersal:678 BE עפולה (עפולה) 2.5km
+MOVED shufersal:677 BE הרצליה (הרצליה) 0.9km
+MOVED shufersal:675 BE 61 שרונים (?) 1.5km
+MOVED shufersal:674 BE  תל ברוך (?) 1.8km
+MOVED shufersal:673 BE 59 פנורמה חיפה (חיפה) 6.1km
+UNVERIFIED shufersal:672 סניף אשדוד סיטי (אשדוד)
+MOVED shufersal:670 BE (פ.י) איכילוב (?) 14.6km
+MOVED shufersal:668 BE קריית השרון נתניה (נתניה) 0.8km
+MOVED shufersal:667 BE מדיקל הלל יפה חדרה (חדרה) 3.8km
+UNVERIFIED shufersal:664 BE בית חולים שערי צדק ירושלים (ירושלים)
+MOVED shufersal:662 BE בית חולים אשדוד (אשדוד) 2.0km
+MOVED shufersal:659 BE  הדר (חיפה) 8.6km
+UNVERIFIED shufersal:658 BE קריית אתא (קריית אתא)
+MOVED shufersal:655 BE רחובות מזרח (רחובות) 0.8km
+MOVED shufersal:654 BE אם המושבות (?) 1.7km
+UNVERIFIED shufersal:653 BE בני-ברק (בני ברק)
+MOVED shufersal:651 BE דרורים (בני דרור) 2.4km
+MOVED shufersal:649 BE עכו (עכו) 0.7km
+MOVED shufersal:648 BE מאיר-כפרסבא (כפר סבא) 0.5km
+MOVED shufersal:640 BE דלית אל כרמל (דלית אל כרמל) 11.2km
+UNVERIFIED shufersal:639 BE אריאל (אריאל)
+MOVED shufersal:638 BE   משמר השרון (משמר השרון) 5.0km
+MOVED shufersal:637 BE רעננה (רעננה) 2.7km
+MOVED shufersal:635 BE 16 ראש-פינה (ראש פינה) 4.4km
+MOVED shufersal:634 BE בת ים (בת ים) 0.6km
+UNVERIFIED shufersal:633 BE נשר תל-חנן (?)
+MOVED shufersal:631 סניף וולפסון (?) 0.1km
+UNVERIFIED shufersal:623 BE סביונים (?)
+MOVED shufersal:620 BE מלכת שבא אילת (אילת) 2.2km
+MOVED shufersal:613 BE נהריה (נהריה) 1.2km
+MOVED shufersal:602 BE (פ.י) אשקלון מרינה (אשקלון) 4.6km
+MOVED shufersal:601 BE פרדס חנה (פרדס חנה) 4.3km
+MOVED shufersal:518 Be כפר קרע (כפר קרע) 4.3km
+UNVERIFIED shufersal:485 BE אשדוד בלה (אשדוד)
+MOVED shufersal:476 BE הוד השרון כיכר המושבה (הוד השרון) 7.1km
+UNVERIFIED shufersal:437 BE אייס מול אילת (אילת)
+MOVED shufersal:345 BE מידטאון (?) 63.2km
+MOVED shufersal:298 BE אמות באר שבע (באר שבע) 4.4km
+MOVED shufersal:270 BE חולון הפלד (חולון) 1.7km
+MOVED shufersal:201 BE בריגה (?) 6.1km
+MOVED shufersal:112 BE קרית מוצקין (קרית מוצקין) 0.7km
+UNVERIFIED shufersal:145 BE נתיבות (נתיבות)
+MOVED shufersal:252 BE עין שמר (עין שמר) 6.1km
+MOVED shufersal:788 BE אפרת (אפרת) 4.1km
+UNVERIFIED shufersal:785 BE מעלה אדומים (מעלה אדומים)
+UNVERIFIED shufersal:787 BE אריאל (אריאל)
+MOVED shufersal:373 Be פארם אור יהודה (אור יהודה) 9.1km
+MOVED shufersal:765 יש חסד בן איש חי (?) 37.5km
+MOVED shufersal:611 יש חסדבני ברק- השומר (?) 85.6km
+UNVERIFIED shufersal:610 יש חסד ירושלים- רמת שלמה (ירושלים)
+UNVERIFIED shufersal:609 יש חסד אלעד-ניסים גאון (אלעד)
+MOVED shufersal:607 יש חסד מודיעין עלי-ק.ספר (מודיעין) 7.1km
+UNVERIFIED shufersal:606 יש חסד בית שמש- מ. מסחרי (בית שמש)
+MOVED shufersal:593 יש חסד באר טוביה (באר טוביה) 2.4km
+MOVED shufersal:349 יש חסד צפת- כנען (?) 116.1km
+UNVERIFIED shufersal:300 יש חסד בארות יצחק- פאוור (בארות יצחק)
+MOVED shufersal:295 יש חסד בני ברק-שלמה המלך (בני ברק) 1.2km
+MOVED shufersal:234 יש חסד רסידו (?) 82.3km
+UNVERIFIED shufersal:219 יש חסד בני ברק- עזרא (בני ברק)
+UNVERIFIED shufersal:133 יש חסד ביתר עילית-  הר"ן (ביתר עילית)
+MOVED shufersal:081 יש חסד מודיעין עלית דרום (מודיעין) 5.5km
+UNVERIFIED shufersal:073 יש חסד אשדוד (אשדוד)
+MOVED shufersal:062 יש חסד רכסים (רכסים) 4.9km
+MOVED shufersal:842 אקספרס מטודלה תל אביב (תל אביב) 1.7km
+MOVED shufersal:599 אקספרס ההסתדרות (?) 8.6km
+MOVED shufersal:596 אקספרס אבן גבירול (?) 7.5km
+MOVED shufersal:479 אקספרס בר אילן (?) 22.2km
+MOVED shufersal:400 אקספרס שבזי ראש העין (ראש העין) 1.9km
+MOVED shufersal:393 אקספרס להבים באר שבע (באר שבע) 5.0km
+MOVED shufersal:391 אקספרס אלקנה (אלקנה) 14.9km
+MOVED shufersal:385 אקספרס מאיר יערי תל אביב (תל אביב) 10.9km
+MOVED shufersal:384 אקספרס קרית ביאליק (קרית ביאליק) 3.4km
+MOVED shufersal:375 אקספרס כ"ס- הגליל (?) 68.5km
+UNVERIFIED shufersal:348 אקספרס פ"ת- קק"ל (?)
+UNVERIFIED shufersal:335 אקספרס כ"ס- בן גוריון (?)
+UNVERIFIED shufersal:334 אקספרס פ"ת - שפירא (?)
+MOVED shufersal:325 אקספרס ששת הימים נס ציונ (?) 95.4km
+MOVED shufersal:317 אקספרס גבעת עדה (?) 62.0km
+MOVED shufersal:239 אקספרס יפו- הדרור (?) 16.1km
+MOVED shufersal:148 אקספרס מלצר רחובות (רחובות) 1.1km
+UNVERIFIED shufersal:297 יוניברס חדרה- ארבע האגודות (חדרה)
+UNVERIFIED shufersal:283 יוניברס קרית עקרון- ביל"ו (קרית עקרון)
+UNVERIFIED shufersal:269 יוניברס פ"ת- סגולה (סגולה)
+UNVERIFIED shufersal:244 יוניברס גלילות רמת השרון (רמת השרון)
+UNVERIFIED shufersal:218 יוניברס עפולה- יצחק רבין (עפולה)
+UNVERIFIED shufersal:211 יוניברס כרמיאל- אזור התעשיה (כרמיאל)
+MOVED shufersal:210 יוניברס ראשל"צ- שמוטקין (ראשון לציון) 2.4km
+UNVERIFIED shufersal:195 יוניברס קריון- דרך עכו (עכו)
+UNVERIFIED shufersal:166 יוניברס אקסטרהאשדוד- הבושם (?)
+MOVED shufersal:135 יוניברס אשקלון- פאור סנטר (אשקלון) 3.4km
+UNVERIFIED shufersal:128 יוניברס טירת הכרמל- נחום חת (טירת הכרמל)
+UNVERIFIED shufersal:124 יוניברס בת ים- אורט ישראל (בת ים)
+UNVERIFIED shufersal:091 יוניברס עמק חפר- אזור תעשיה (עמק חפר)
+MOVED ramilevy:006 מישור אדומים (מישור אדומים) 0.4km
+MOVED ramilevy:020 זכרון יעקב (זכרון יעקב) 1.7km
+MOVED ramilevy:027 באר שבע (באר שבע) 2.3km
+MOVED ramilevy:028 עכו (עכו) 0.5km
+MOVED ramilevy:030 קדימה (?) 29.1km
+MOVED ramilevy:031 נתיבות (נתיבות) 1.0km
+MOVED ramilevy:032 נהריה (נהריה) 2.7km
+MOVED ramilevy:043 ראשון לציון (ראשון לציון) 0.7km
+UNVERIFIED ramilevy:055 רמת החייל (דבורה)
+MOVED ramilevy:062 צק פוסט (?) 79.4km
+MOVED ramilevy:066 מגדל העמק (מגדל העמק) 2.0km
+MOVED ramilevy:700 בית הפירות פסגת זאב (ירושלים) 9.2km
+MOVED ramilevy:703 בית הפירות פת (?) 52.9km
+UNVERIFIED ramilevy:704 בית הפירות בית שמש (בית שמש)
+MOVED ramilevy:705 בית הפירות קריית יוב (?) 48.5km
+MOVED ramilevy:706 ב.הפירות ארמון הנציב (?) 8.4km
+UNVERIFIED ramilevy:710 אלי כהן אשקלון (אשקלון)
+MOVED ramilevy:714 מגדיאל הוד השרון (הוד השרון) 2.0km
+MOVED ramilevy:715 סוקולוב הרצליה (הרצליה) 0.5km
+UNVERIFIED ramilevy:717 הנשיא חדרה (חדרה)
+MOVED ramilevy:720 הרטום נתניה (נתניה) 0.4km
+UNVERIFIED ramilevy:722 חטיבה תשע עפולה (עפולה)
+MOVED ramilevy:727 קיריון קרית ביאליק (קרית ביאליק) 9.0km
+UNVERIFIED ramilevy:728 שבזי ראש העין (ראש העין)
+UNVERIFIED ramilevy:737 בן יהודה תל אביב (תל אביב)
+MOVED osherad:023 נתניה (נתניה) 0.8km
+MOVED osherad:034 עד הלום (?) 4.3km
+MOVED yohananof:013 חוצות המפרץ (?) 0.4km
+MOVED yohananof:019 אור יהודה גדול (אור יהודה) 0.6km
+MOVED yohananof:025 נס ציונה (נס ציונה) 0.4km
+MOVED yohananof:048 אשדות יעקב (?) 0.8km
+UNVERIFIED yohananof:146 מישור אדומים פיק אפ (מישור אדומים)
+MOVED tivtaam:014 ראשון מזרח (בית דגן) 2.0km
+MOVED tivtaam:015 באר שבע חדש (באר שבע) 0.7km
+UNVERIFIED tivtaam:030 מפגש מזרע (מזרע)
+MOVED tivtaam:059 בן יהודה 181 (?) 0.4km
+MOVED tivtaam:063 אבן גבירול 64 (?) 0.6km
+MOVED tivtaam:084 דלי איינשטיין (?) 12.5km
+UNVERIFIED tivtaam:092 מחניים (מחניים)
+MOVED hazihinam:205 הלחי 16 ראשל&quot;צ (?) 9.7km
+MOVED carrefour:002 קרפור מרקט  אשקלון חאן (אשקלון) 0.4km
+MOVED carrefour:004 קרפור היפר   אשקלון צפוני (אשקלון) 0.4km
+MOVED carrefour:019 קרפור מרקט  תל מונד (תל מונד) 1.6km
+MOVED carrefour:033 קרפור היפר   בית שמש (בית שמש) 0.3km
+MOVED carrefour:046 קרפור מרקט  רמלה (רמלה) 0.9km
+UNVERIFIED carrefour:080 יינות ביתן טבעון (טבעון)
+MOVED carrefour:084 קרפור סיטי  מתן (?) 41.1km
+MOVED carrefour:091 קרפור מרקט ריינס (?) 0.7km
+MOVED carrefour:116 קרפור סיטי  כיכר דיזינגוף (?) 0.8km
+MOVED carrefour:117 סינמה סיטי (?) 45.0km
+MOVED carrefour:124 מרקט יבנה דואני (יבנה) 1.2km
+MOVED carrefour:132 קרפור סיטי  ויצמן תל אביב (תל אביב) 2.5km
+UNVERIFIED carrefour:221 קרפור מרקט  מגדל נחום (מגדל)
+MOVED carrefour:329 קרפור סיטי  נאות רחל (אילת) 1.2km
+MOVED carrefour:337 קרפור סיטי  נאות אפקה (תל אביב - יפו) 94.7km
+MOVED carrefour:345 קרפור סיטי  נאות שושנים (?) 89.9km
+MOVED carrefour:523 קרפור סיטי דימונה (דימונה) 0.8km
+MOVED carrefour:558 קרפור סיטי  רמת החייל (תל אביב - יפו) 95.9km
+MOVED carrefour:698 קרפור סיטי  בית אבות (?) 44.7km
+MOVED carrefour:830 קרפור גולן רעננה (גולן) 5.2km
+MOVED carrefour:850 קרפור סיטי  קרית שרת (?) 10.2km
+UNVERIFIED carrefour:914 קרפור סיטי  נווה אביבים (אביבים)
+UNVERIFIED carrefour:403 קרפור סיטי  הצרכנייה רמלה (1112) (רמלה)
+MOVED carrefour:405 קרפור סיטי  נווה כרמית (1147) (?) 14.3km
+MOVED carrefour:406 קרפור סיטי  מכבים (1150) (?) 2.2km
+UNVERIFIED carrefour:412 קרפור מעלה אילת (1252) (אילת)
+MOVED carrefour:416 בעיר שדרות B (1340) (?) 64.5km
+MOVED carrefour:417 קרפור סיטי  קיראון (1430) (קרית אונו) 0.4km
+MOVED carrefour:421 קרפור סיטי  אבן יהודה (2180) (אבן יהודה) 0.5km
+MOVED carrefour:425 קרפור מרקט  גן יבנה (2310) (יבנה) 26.1km
+MOVED carrefour:428 קרפור מרקט  עיר ימים נתניה (2410) (נתניה) 2.1km
+MOVED carrefour:430 קרפור סיטי  כפר שלם (2490) (?) 50.4km
+MOVED carrefour:437 קרפור  עמישב פ"ת (2750) (?) 1.3km
+UNVERIFIED carrefour:443 קרפור סיטי  בר אילן (3174) (?)
+MOVED carrefour:444 קרפור סיטי  רמות צהלה (3180) (תל אביב - יפו) 4.8km
+MOVED carrefour:445 קרפור סיטי לב אשקלון (3210) (אשקלון) 5.2km
+MOVED carrefour:446 קרפור סיטי  אלוני השרון נתניה (3280) (נתניה) 0.4km
+UNVERIFIED carrefour:447 קרפור מרקט  קניון אביה (3300) (אביה)
+UNVERIFIED carrefour:450 קרפור סיטי  גבעת סביון (3506) (סביון)
+MOVED carrefour:451 קרפור סיטי  רמות אלון (3580) (?) 82.2km
+MOVED carrefour:458 קרפור סיטי  תל ברוך (3990) (?) 24.9km
+MOVED carrefour:460 קרפור הדר הרצליה (4120) (הרצליה) 4.1km
+UNVERIFIED carrefour:461 קרפור סיטי  נווה אמירים (4130) (אמירים)
+MOVED carrefour:462 קרפור סיטי  הרצליה פיתוח (4150) (הרצליה) 5.1km
+MOVED carrefour:464 בעיר נווה עמל (4170) (?) 1.2km
+MOVED keshet:091 פודטראק עזריאלי (תל אביב - יפו) 85.3km
+UNVERIFIED keshet:102 קולינריק קרית אונו (קרית אונו)
+UNVERIFIED keshet:104 קולינריק רמת גן (רמת גן)
+UNVERIFIED keshet:105 קולינריק מודיעין (מודיעין)
+UNVERIFIED salachd:004 מגדל (מגדל)
+MOVED salachd:007 עין המפרץ (עין המפרץ) 0.3km
+UNVERIFIED salachd:017 עפולה (עפולה)
+UNVERIFIED salachd:024 מסעדה עין המפרץ (מסעדה)
+MOVED politzer:001 רמב"ם (?) 14.7km
+MOVED politzer:002 ויתקין (?) 26.8km
+MOVED politzer:004 ניסן (?) 40.4km
+UNVERIFIED supersapir:262 סופר ספיר אופקים (אופקים)
+MOVED supersapir:020 צפת ת. (?) 25.8km
+MOVED supersapir:021 חצור ת. (?) 35.4km
+UNVERIFIED supersapir:077 סופר ספיר אריאל ב** ת. (אריאל)
+MOVED supersapir:002 צומת פת ת. (?) 62.0km
+MOVED supersapir:017 שוק אלנבי ת. (?) 86.5km
+MOVED supersapir:088 סופר ספיר רחובות (רחובות) 16.4km
+MOVED supersapir:022 נטו קרית שמונה * ת. (קרית שמונה) 0.4km
+MOVED supersapir:040 נטו חיסכון ביתר עלית* ת. (ביתר) 10.3km
+MOVED supersapir:053 עפולה נטו חיסכון* ת. (עפולה) 2.7km
+UNVERIFIED supersapir:082 נטו חיסכון מודיעין עלית שד' יחזקאל* ת. (מודיעין)
+MOVED supersapir:085 נטו חיסכון באר שבע* ת. (באר שבע) 5.2km
+MOVED supersapir:192 נטו חיסכון חדרה דוד אלעזר* ת. (חדרה) 2.2km
+UNVERIFIED supersapir:194 נטו חיסכון נתניה הפלדה* ת. (נתניה)
+UNVERIFIED supersapir:152 המכולת בת ים זכיין ת. (בת ים)
+UNVERIFIED supersapir:154 המכולת סביון ת. (סביון)
+UNVERIFIED supersapir:155 המכולת גדרה ת. (גדרה)
+UNVERIFIED supersapir:156 המכולת רמת השרון זכיין ת. (רמת השרון)
+MOVED supersapir:159 המכולת כפר סבא זכיין ת. (כפר סבא) 11.0km
+UNVERIFIED supersapir:160 המכולת חולון ת. (חולון)
+UNVERIFIED supersapir:161 זכיין המכולת נורדיה ת. (נורדיה)
+UNVERIFIED supersapir:167 המכולת אבן יהודה ת. (אבן יהודה)
+UNVERIFIED supersapir:168 המכולת שלנו פרויטיאה בכפר בני דרור ת. (בני דרור)
+UNVERIFIED supersapir:172 המכולת שלנו קרית טבעון (קרית טבעון)
+MOVED supersapir:072 - קרית ים ת. (קרית ים) 2.6km
+UNVERIFIED supersapir:261 זכיין - סופר זול מהדרין אלעד נטו ת. (אלעד)
+MOVED supersapir:264 קרית ים גאולה זכיין ת. (קרית ים) 14.0km
+UNVERIFIED supersapir:060 זכיין - קדימה ת. (?)
+MOVED supersapir:043 נטו חיסכון מעלות* ת. (?) 41.9km
+UNVERIFIED supersapir:061 בית הפירות גילה ת. (ירושלים)
+UNVERIFIED supersapir:039 בר גיורא ת. (בר גיורא)
+UNVERIFIED supersapir:044 יובל אורוגוואי ת. (יובל)
+UNVERIFIED supersapir:006 קרית יובל ת. (יובל)
+UNVERIFIED supersapir:076 אריאל א' - סופר ספיר* ת. (אריאל)
+UNVERIFIED supersapir:399 זכיין ארלוזרוב ת. (?)
+MOVED kingstore:001 אום אלפחם (?) 49.4km
+MOVED kingstore:003 פרידיס (?) 0.4km
+UNVERIFIED kingstore:009 טמרה (טמרה)
+UNVERIFIED kingstore:012 נוף הגליל דודג' סנטר (נוף הגליל)
+UNVERIFIED kingstore:013 קאסם (?)
+UNVERIFIED kingstore:018 יפת-יפו תל אביב יום ביום (תל אביב)
+MOVED kingstore:026 רהט סבן (עומר) 14.8km
+MOVED kingstore:030 כפר כנא (כפר כנא) 0.8km
+UNVERIFIED kingstore:031 צים סנטר נוף הגליל (נוף הגליל)
+MOVED kingstore:200 ואדי אלגוז' (?) 49.6km
+UNVERIFIED kingstore:334 מיני קינגסטור דיר חנא (?)
+UNVERIFIED kingstore:336 מיני קינגסטור קלנסווה (קלנסווה)
+UNVERIFIED kingstore:338 מיני קינג חיי אלוורוד (עומר)
+UNVERIFIED kingstore:339 יפו מכללה יום ביום (ירוחם)
+MOVED kingstore:340 מיני קינג סח'נין (סחנין) 11.7km
+MOVED maayan2000:004 פסגת זאב (ירושלים) 1.0km
+MOVED maayan2000:005 התאנה (?) 98.7km
+MOVED maayan2000:006 ירמיהו אחד (?) 1.7km
+UNVERIFIED maayan2000:007 משה דיין (?)
+UNVERIFIED maayan2000:008 פרי מגדים (מגדים)
+UNVERIFIED maayan2000:011 הר חומה (רועי)
+MOVED maayan2000:016 קרסו (?) 33.7km
+MOVED maayan2000:018 גילה (ירושלים) 7.5km
+MOVED maayan2000:020 הילל (?) 116.3km
+MOVED maayan2000:021 שמואל הנביא (?) 1.0km
+UNVERIFIED maayan2000:023 קק"ל (?)
+MOVED maayan2000:026 שער בנימין אזור תעשיה (?) 47.7km
+MOVED maayan2000:027 נופי הסלע (?) 56.1km
+MOVED maayan2000:029 טופז (?) 324.0km
+UNVERIFIED maayan2000:039 סימטת אזר (?)
+UNVERIFIED maayan2000:040 הרב קוק (?)
+UNVERIFIED maayan2000:043 השישה עשר (?)
+UNVERIFIED maayan2000:045 כיכר יהלום (?)
+MOVED maayan2000:047 יוחנן הורקנוס (?) 58.2km
+UNVERIFIED maayan2000:062 נווה יעקב (אביר יעקב) (ירושלים)
+UNVERIFIED maayan2000:064 קרית ספר (מודיעין עילית)
+UNVERIFIED maayan2000:065 מרכז גילת (גילת)
+MOVED zolvebegadol:003 רמות עליית נוער (ירושלים) 0.9km
+MOVED zolvebegadol:007 הרב קוק (ירושלים) 0.6km
+MOVED zolvebegadol:011 פסגת זאב הגדול (ירושלים) 1.3km
+UNVERIFIED zolvebegadol:015 קרית יובל (יובל)
+MOVED zolvebegadol:020 כפר עזר (?) 61.8km
+MOVED zolvebegadol:028 מושב יתד (יתד) 1.9km
+MOVED zolvebegadol:032 הבקעה (ירושלים) 5.3km
+MOVED zolvebegadol:033 בית שמש (בית שמש) 0.0km
+MOVED zolvebegadol:041 ארץ חפץ (ירושלים) 6.8km
+UNVERIFIED zolvebegadol:089 פסגת זאב (ירושלים)
+UNVERIFIED superbareket:010 קיבוץ גלויות (תל אביב)
+UNVERIFIED superbareket:014 ת"א סלמה (סלמה)
+UNVERIFIED superbareket:060 נס ציונה סנונית (נס ציונה)
+MOVED shefabirkathashem:002 בן ציון ברוק (?) 43.9km
+UNVERIFIED shefabirkathashem:005 החיד"א (?)
+MOVED shefabirkathashem:006 יואל (?) 43.4km
+MOVED shefabirkathashem:007 שדרות האמוראים 45 (?) 43.4km
+MOVED shefabirkathashem:017 אגן האיילות ג. זאב (?) 28.0km
+MOVED shefabirkathashem:018 מעזריטש (?) 41.1km
+MOVED shefabirkathashem:026 בבא סאלי (?) 70.7km
+UNVERIFIED shefabirkathashem:028 ר' עקיבא (?)
+MOVED shefabirkathashem:029 הרב שך (?) 47.9km
+UNVERIFIED shefabirkathashem:036 תל ציון (תל ציון)
+UNVERIFIED shefabirkathashem:039 מודיעין עילית (מודיעין עילית)
+MOVED shukhayir:005 אשקלון צפוני (אשקלון) 1.6km
+UNVERIFIED shukhayir:016 אפרת (אפרת)
