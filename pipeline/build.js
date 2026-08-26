@@ -12,8 +12,11 @@ fs.mkdirSync(DATA, { recursive: true });
 const CHAINS = require('./chains-list').map(({ id, name }) => ({ id, name }));
 const CHAIN_SET = new Set(CHAINS.map((c) => c.id));
 
-const today = new Date().toISOString().slice(0, 10);
-const now=new Date(); const stamp = today + 'T' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+// שעון ישראל תמיד - הראנר של GitHub רץ ב-UTC והמשתמשים קוראים את השעות כפשוטן
+const ilNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+const p2 = (n) => String(n).padStart(2, '0');
+const today = `${ilNow.getFullYear()}-${p2(ilNow.getMonth() + 1)}-${p2(ilNow.getDate())}`;
+const stamp = today + 'T' + p2(ilNow.getHours()) + ':' + p2(ilNow.getMinutes());
 const branches = JSON.parse(fs.readFileSync(BRANCHES_FILE, 'utf8'));
 
 // ---------- מחיר ליחידה: נירמול Quantity+UnitQty לבסיס אחיד (גרם/מ"ל/יח'/מטר) ----------
@@ -259,6 +262,17 @@ function applyUnit(rec, code) {
 }
 const STALE_CUTOFF = new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10);
 
+// ריצות מקבילות בעבר הכניסו רשומות היסטוריה שלא לפי סדר זמן - ממיינים ומאחדים מחיר זהה עוקב;
+// רשתות שהוסרו (דור אלון) לא נגררות
+function tidyHistory(rec) {
+  for (const k of Object.keys(rec.history)) {
+    if (!CHAIN_SET.has(k)) { delete rec.history[k]; continue; }
+    const h = rec.history[k];
+    h.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    for (let i = h.length - 1; i > 0; i--) if (h[i][1] === h[i - 1][1]) h.splice(i, 1);
+  }
+}
+
 const SAMPLE_RES = [
   [/קוטג/], [/במבה/], [/קוקה.?קולה/], [/מילקי/], [/חלב.*3%|3%.*חלב|מועשר.?3%/],
   [/ביסלי/], [/שוקולד.*פרה|פרה.*במילו|ממולדה/], [/טחינה/], [/טונה/], [/פתי.?בר|פתיבר/],
@@ -361,13 +375,7 @@ for (const d of DISTRICTS) {
     const rec = shard[code] || { prices: {}, history: {} };
     rec.name = globalName.get(code) || rec.name || code; // שם קנוני אחיד בכל הארץ
     rec.prices = {};
-    for (const k of Object.keys(rec.history)) {
-      if (!CHAIN_SET.has(k)) { delete rec.history[k]; continue; } // רשתות שהוסרו (דור אלון) לא נגררות
-      // ריצות מקבילות בעבר הכניסו רשומות שלא לפי סדר זמן - ממיינים ומאחדים מחיר זהה עוקב
-      const h = rec.history[k];
-      h.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
-      for (let i = h.length - 1; i > 0; i--) if (h[i][1] === h[i - 1][1]) h.splice(i, 1);
-    }
+    tidyHistory(rec);
     applyUnit(rec, code);
     const mc = globalCountry.get(code); if (mc) rec.mc = mc;
     const mf = globalBrand.get(code); if (mf) rec.mf = mf;
@@ -412,6 +420,7 @@ for (const d of DISTRICTS) {
     rec.name = pr.label;
     rec.prices = {};
     rec.u = /\(יח'\)/.test(pr.label) ? [1, 'unit'] : [1000, 'g']; // תוצרת שקילה - מחיר לק"ג
+    tidyHistory(rec);
     for (const [id, price] of Object.entries(pr.prices)) {
       rec.prices[id] = { p: price, d: today };
       const h = (rec.history[id] = rec.history[id] || []);
@@ -458,6 +467,21 @@ for (const d of DISTRICTS) {
   }
   for (const [sh, obj] of shards) fs.writeFileSync(path.join(SDIR, sh + '.json'), JSON.stringify(obj));
   fs.writeFileSync(path.join(DATA, 'd', d.id, 'index.json'), JSON.stringify(deduped));
+
+  // פיד שינויי מחירים: כל שינוי מהשבוע האחרון במחוז, חדש→ישן - הדרך למצוא מה התייקר/הוזל
+  const feedCutoff = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const feed = [];
+  for (const obj of shards.values()) {
+    for (const [code, rec] of Object.entries(obj)) {
+      for (const [ch, h] of Object.entries(rec.history || {})) {
+        if (h.length < 2 || !rec.prices || !rec.prices[ch]) continue;
+        const last = h[h.length - 1];
+        if (last[0].slice(0, 10) >= feedCutoff) feed.push({ c: code, n: rec.name, ch, f: h[h.length - 2][1], t: last[1], d: last[0] });
+      }
+    }
+  }
+  feed.sort((a, b) => (a.d < b.d ? 1 : -1));
+  fs.writeFileSync(path.join(DATA, 'd', d.id, 'changes.json'), JSON.stringify(feed.slice(0, 200)));
   index.length = 0; index.push(...deduped);
   if (dropped) console.log(`  ${d.he}: מוזגו ${dropped} כפילויות שם`);
 

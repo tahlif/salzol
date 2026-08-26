@@ -383,3 +383,10 @@ footer a { color: var(--text-2); }
 .narrowcols .price .pval { padding: 2.5px 3px; font-size: 12.5px; }
 .narrowcols .price .unitp { font-size: 9px; }
 .narrowcols .price .promop { font-size: 9.5px; }
+/* פיד שינויי מחירים */
+.chgup { color: #d92f2f; font-weight: 600; }
+.chgdown { color: var(--accent); font-weight: 600; }
+#changesList .linkbtn { margin: 8px auto 0; display: block; }
+/* עמודות צרות: תא נקי - מחיר+חץ ומבצע בלבד; ₪/100ג' נשאר בקארד ובמסך רחב */
+.narrowcols .price .unitp { display: none; }
+.narrowcols .chg { font-size: 10px; }

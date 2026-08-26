@@ -711,6 +711,7 @@
     }
     hydrateImages();
     resolveMissingNames();
+    renderChangesFeed(); // הפיד עוקב אחרי האזור/הסניפים הנוכחיים
   }
   // שמות למוצרים שלא נמכרים באזור הנוכחי - חיפוש שקט בשאר האזורים ועדכון השורה
   let namesBusy = false;
@@ -736,17 +737,22 @@
   async function openProductCard(code) {
     const cols = colsNow();
     let name = byCode.has(code) ? byCode.get(code).n : '';
+    // הקארד נפתח מיד עם "טוען" - 7 בקשות המחוזות רצות במקביל (היו עוקבות והקארד "לא הופיע")
+    $('pcBody').innerHTML = `<div class="pchead"><span class="pcimgwrap"><span class="pcimg thumb"></span></span><div><h3>${name || 'טוען…'}</h3><p class="pcmeta">טוען מחירים…</p></div></div>`;
+    $('pcard').hidden = false;
+    document.body.style.overflow = 'hidden';
     // זמינות בכל הארץ: רשת → אזורים שבהם היא מוכרת את המוצר
     const avail = {};
     const recByDist = {};
-    for (const dm of meta.districts) {
-      const rec = await loadProductIn(dm.id, code);
-      if (!rec) continue;
+    const recs = await Promise.all(meta.districts.map((dm) => loadProductIn(dm.id, code)));
+    meta.districts.forEach((dm, i) => {
+      const rec = recs[i];
+      if (!rec) return;
       recByDist[dm.id] = rec;
       if (!name) name = rec.name;
       if (rec.name) nameMap[code] = rec.name;
       for (const [ch, pr] of Object.entries(rec.prices)) (avail[ch] = avail[ch] || []).push({ he: dm.he, p: pr.p });
-    }
+    });
     const colRecs = cols.map((c) => recByDist[c.dist]);
     const prices = cols.map((c, i) => (colRecs[i] && colRecs[i].prices[c.chain] ? colRecs[i].prices[c.chain].p : null));
     const have = prices.filter((p) => p !== null);
@@ -770,15 +776,18 @@
     const histLine = (h, t) => {
       if (!h || !h.length) return t ? `<span class="phist stabletxt">בתוקף מאז ${fmtD(t)}</span>` : '';
       const first = h[0], last = h[h.length - 1];
-      const stable = h.length === 1 || first[1] === last[1];
+      // "יציב" רק כשכל הנקודות שוות - מחיר שירד וחזר (ראשון=אחרון) הוא לא יציב
+      const stable = h.every((x) => x[1] === first[1]);
       if (stable) {
         const since = t && t < first[0] ? t : first[0];
         if (h.length === 1 && first[0] >= meta.updated && !t) return '';
         return `<span class="phist stabletxt">${t && t < first[0] ? 'בתוקף' : 'יציב'} מאז ${fmtD(since)}</span>`;
       }
-      const up = last[1] > first[1];
-      const pct = first[1] ? Math.round((Math.abs(last[1] - first[1]) / first[1]) * 100) : 0;
-      return `<div class="phist">${spark(h, up, true)}<span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}% · מ־${fmt(first[1])}</span></div>`;
+      // התג משקף את השינוי האחרון (לא ראשון-מול-אחרון); הגרף מראה את כל המסלול
+      const prev = h[h.length - 2];
+      const up = last[1] > prev[1];
+      const pct = prev[1] ? Math.round((Math.abs(last[1] - prev[1]) / prev[1]) * 100) : 0;
+      return `<div class="phist">${spark(h, up, true)}<span class="hbadge ${up ? 'hup' : 'hdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}% · מ־${fmt(prev[1])}</span></div>`;
     };
     const cardRec = recByDist[district] || colRecs.find(Boolean) || Object.values(recByDist)[0];
     const cardU = cardRec && cardRec.u;
@@ -928,6 +937,42 @@
     if (th && thumbUrl(th)) { openImgZoom(thumbUrl(th)); return; }
     const row = ev.target.closest('.row[data-code]');
     if (row) await openProductCard(row.dataset.code);
+  });
+
+  // ---------- פיד שינויי מחירים: מה התייקר/הוזל באזור בשבוע האחרון ----------
+  const changesCache = {};
+  let chgFilter = 'all';
+  let chgShown = 12;
+  async function renderChangesFeed() {
+    const dist = useFav() ? (favCols()[0] || { district }).district : district;
+    if (!(dist in changesCache)) {
+      changesCache[dist] = await fetch(`data/d/${dist}/changes.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+    }
+    const all = changesCache[dist] || [];
+    $('changesCard').hidden = !all.length;
+    if (!all.length) return;
+    const list = all.filter((e) => chgFilter === 'all' || (chgFilter === 'up' ? e.t > e.f : e.t < e.f));
+    const ups = all.filter((e) => e.t > e.f).length;
+    $('chgCount').textContent = `${all.length} שינויים בשבוע האחרון באזור ${districtHe[dist] || ''}: ${ups} התייקרו, ${all.length - ups} הוזלו · לחיצה פותחת את המוצר`;
+    $('changesList').innerHTML = list.slice(0, chgShown).map((e) => {
+      const up = e.t > e.f;
+      const pct = e.f ? Math.round((Math.abs(e.t - e.f) / e.f) * 100) : 0;
+      return `<button class="shrinkrow" data-code="${e.c}"><span class="thumb" data-code="${e.c}"></span><span class="shrinktxt"><b>${e.n}</b><small>${chainName[e.ch] || e.ch} · <span class="${up ? 'chgup' : 'chgdown'}">${up ? '▲ התייקר' : '▼ הוזל'} ${pct}%</span> · <bdi>${fmt(e.f)} ← ${fmt(e.t)}</bdi> · ${fmtDT(e.d)}</small></span></button>`;
+    }).join('') + (list.length > chgShown ? `<button class="linkbtn" id="chgMore">הצגת עוד שינויים ▾</button>` : '');
+    hydrateImages();
+  }
+  $('chgFilters').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button[data-f]');
+    if (!b) return;
+    chgFilter = b.dataset.f;
+    chgShown = 12;
+    for (const c of $('chgFilters').children) c.classList.toggle('sel', c === b);
+    renderChangesFeed();
+  });
+  $('changesList').addEventListener('click', async (ev) => {
+    if (ev.target.closest('#chgMore')) { chgShown += 24; renderChangesFeed(); return; }
+    const b = ev.target.closest('[data-code]');
+    if (b) await openProductCard(b.dataset.code);
   });
 
   // ---------- מכווצים לכם את האריזה (shrink.json נצבר ב-build לאורך זמן) ----------
