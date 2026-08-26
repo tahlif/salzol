@@ -399,3 +399,7 @@ footer a { color: var(--text-2); }
 /* עמודות צרות: שם המוצר מקבל את כל הרוחב - בלי תג גודל ודגל בשורה (יש אותם בקארד) */
 .narrowcols .row .pkg, .narrowcols .row .rowflag { display: none; }
 .sgpromo { color: #b3552e; font-weight: 600; }
+/* עמודת המוצר הדביקה מכסה את כל גובה השורה + את מרווח הגריד שלידה -
+   שתאי מבצע/יחידה לא יציצו מתחתיה בגלילה אופקית */
+.row .pname { align-self: stretch; align-items: flex-start; margin-top: 0; padding-top: 6px; box-shadow: -8px 0 0 var(--surface); }
+.thead .pname, .totals .pname { box-shadow: -8px 0 0 var(--surface); }
