@@ -51,6 +51,12 @@ jobs:
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
         run: node pipeline/social-post.js
 
+      - name: מענה אוטומטי לתגובות בעמוד
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+        run: node pipeline/social-replies.js
+
       - name: קומיט של הדאטה המעודכן
         run: |
           git config user.name "zolli-bot"
