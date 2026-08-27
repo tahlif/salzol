@@ -45,6 +45,12 @@ jobs:
       - name: מפת תמונות מצטברת (Open Facts + רמי לוי, נתח לילי)
         run: node pipeline/images.js
 
+      - name: פוסט יומי אוטומטי לפייסבוק
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+        run: node pipeline/social-post.js
+
       - name: קומיט של הדאטה המעודכן
         run: |
           git config user.name "zolli-bot"
