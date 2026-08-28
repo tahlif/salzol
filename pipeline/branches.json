@@ -43,10 +43,10 @@
       "district": "south"
     },
     "yosh": {
-      "store": "133",
-      "name": "יש חסד ביתר עילית-  הר\"ן",
+      "store": "076",
+      "name": "דיל אריאל",
       "city": "",
-      "address": "הר\"ן 6 פינת פנים המאירים",
+      "address": "רח' מוריה",
       "district": "yosh"
     }
   },
@@ -406,7 +406,43 @@
       "district": "center"
     }
   },
-  "freshmarket": {},
+  "freshmarket": {
+    "north": {
+      "store": "045",
+      "name": "מחסני מזון כרמיאל",
+      "city": "",
+      "address": "רמים 104",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "013",
+      "name": "מחסני מזון ק.שמואל",
+      "city": "חיפה",
+      "address": "רח' דב פרמר 14,חיפה",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "042",
+      "name": "מחסני מזון פתח תקווה",
+      "city": "",
+      "address": ",חייה פינשטיין 1",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "039",
+      "name": "סופר דוש חולון",
+      "city": "",
+      "address": "דוד שלתיאל",
+      "district": "telaviv"
+    },
+    "south": {
+      "store": "024",
+      "name": "מחסני להב באר שבע",
+      "city": "",
+      "address": "גרנד קניון ב\"ש קומה -2",
+      "district": "south"
+    }
+  },
   "supersapir": {
     "north": {
       "store": "053",
