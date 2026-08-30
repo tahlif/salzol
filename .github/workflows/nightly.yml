@@ -53,6 +53,13 @@ jobs:
           GOOGLE_MAPS_KEY: ${{ secrets.GOOGLE_MAPS_KEY }}
         run: node pipeline/geocode-google.js
 
+      - name: מיקומים רשמיים מאתרי הרשתות (רמי לוי API + official-locators.json)
+        timeout-minutes: 15
+        continue-on-error: true
+        env:
+          GOOGLE_MAPS_KEY: ${{ secrets.GOOGLE_MAPS_KEY }}
+        run: node pipeline/site-locations.js
+
       - name: הצמדה לנקודות סופרמרקטים ב-OSM
         run: node pipeline/osm-pois.js
 
