@@ -201,8 +201,9 @@
     const u = (byCode.get(code) || {}).u;
     return !!u && u[1] === 'g' && u[0] >= 500 && !/^\d{8,13}$/.test(code);
   };
-  const qtyStep = (code) => (byWeight(code) ? 0.5 : 1);
-  const qtyOf = (code) => Math.min(10, Math.max(qtyStep(code), qty[code] || 1));
+  const QTY_MAX = 30;
+  const qtyStep = (code) => (byWeight(code) ? 0.1 : 1);
+  const qtyOf = (code) => Math.min(QTY_MAX, Math.max(qtyStep(code), qty[code] || 1));
   const fmtQ = (q) => String(Math.round(q * 100) / 100); // 1.37 נשאר 1.37, לא מעוגל ל-1.4
   const saveQty = () => localStorage.setItem('zulik-qty', JSON.stringify(qty));
   let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
@@ -528,7 +529,7 @@
       // מחיר: מהאינדקס אם קיים (e.p), אחרת placeholder שמתמלא מהשארד ברקע
       const priceB = e.p != null ? `<b class="sgprice">מ-${fmt(e.p)}</b>` : `<b class="sgprice" data-code="${e.c}"></b>`;
       const inBasket = basket.includes(e.c);
-      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favAll ? `<span class="sgfav sgfavall">⭐ בכל המועדפים שלך</span><br>` : e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}${e.favIn.length > 1 ? ` +${e.favIn.length - 1}` : ''}</span><br>` : ''}${e.ch.length} רשתות<br>${priceB}</span><span class="sgadd${inBasket ? ' insg' : ''}" data-add="${e.c}" data-tip="${inBasket ? 'בסל - לחיצה מוסיפה עוד' : 'הוספה לרשימה בלי לסגור את החיפוש'}">${inBasket ? '✓' : '+'}</span></button>`;
+      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favAll ? `<span class="sgfav sgfavall">⭐ בכל המועדפים שלך</span><br>` : e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}${e.favIn.length > 1 ? ` +${e.favIn.length - 1}` : ''}</span><br>` : ''}${e.ch.length} רשתות<br>${priceB}</span><span class="sgadd${inBasket ? ' insg' : ''}" data-add="${e.c}" data-tip="הוסף לרשימה">${inBasket ? '✓' : '+'}</span></button>`;
     }).join('');
     sugEl.hidden = false;
     hydrateSuggestImages();
@@ -596,7 +597,15 @@
     decorate = (e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [], favAll: allFav(e) });
     allMatches = index
       .filter(passFilters)
-      .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t) || (e.c.startsWith('v-') && t.length >= 3 && n.includes(t.slice(0, -1)))); })
+      .filter((e) => {
+        if (!toks.length) return true;
+        const n = norm(e.n + ' ' + (e.b || ''));
+        // התאמה רכה: "מעדני דניאלה" מוצא את "דניאלה מעדן גבינה", "בננה" את "בננות" -
+        // אם המילה לא נמצאת כמו שהיא, מנסים בלי ה/י בסוף, ובלי סיומת ים/ות
+        return toks.every((t) => n.includes(t)
+          || (t.length >= 4 && n.includes(t.slice(0, -1)))
+          || (t.length >= 5 && /(ים|ות)$/.test(t) && n.includes(t.slice(0, -2))));
+      })
       .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (rel(a) - rel(b)) || (allFav(b) - allFav(a)) || (favCount(b) - favCount(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length));
     shown = 10;
     matches = allMatches.slice(0, shown).map(decorate);
@@ -638,9 +647,9 @@
   });
   // הוספה לסל בלי לגעת בחלונית החיפוש (משרת גם את ➕ שבהצעות); מחזירה הצלחה
   async function addToBasket(code) {
-    // בחירה חוזרת של מוצר שכבר בסל = עוד יחידה/חצי ק"ג (עד 10) - כל המחירים והסה"כ מתעדכנים
+    // בחירה חוזרת של מוצר שכבר בסל = עוד יחידה/0.1 ק"ג (עד 30) - כל המחירים והסה"כ מתעדכנים
     if (basket.includes(code)) {
-      qty[code] = Math.round(Math.min(10, qtyOf(code) + qtyStep(code)) * 100) / 100;
+      qty[code] = Math.round(Math.min(QTY_MAX, qtyOf(code) + qtyStep(code)) * 100) / 100;
       saveQty();
       await render();
       return true;
@@ -984,7 +993,7 @@
         html: `<div class="rowwrap"><div class="row" data-code="${code}">
         <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${pkg ? `<span class="pkg">${pkg}</span>` : ''}${flagHtml(anyRec.mc)}${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
         <div class="prices-m">${cells}</div>
-        <span class="rowtools"><span class="qtybox" data-tip="${byWeight(code) ? 'משקל בק&quot;ג (עד 10) - אפשר להקליד משקל מדויק, הסה&quot;כ לפי מחיר לק&quot;ג' : 'כמות בסל (עד 10) - אפשר להקליד, הסה&quot;כ מוכפל'}"><button class="qbtn" data-qdown="${code}">−</button><input class="qinp ${q !== 1 ? 'qon' : ''}" data-qin="${code}" value="${fmtQ(q)}" type="text" inputmode="decimal" aria-label="${byWeight(code) ? 'משקל בק&quot;ג' : 'כמות'}"><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
+        <span class="rowtools"><span class="qtybox"><button class="qbtn" data-qdown="${code}">−</button><input class="qinp ${q !== 1 ? 'qon' : ''}" data-qin="${code}" value="${fmtQ(q)}" type="text" inputmode="${byWeight(code) ? 'decimal' : 'numeric'}" aria-label="${byWeight(code) ? 'משקל בק&quot;ג' : 'כמות'}"><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
       </div></div>` });
     });
 
@@ -1235,8 +1244,8 @@
     let v = parseFloat(String(inp.value).replace(',', '.'));
     if (!isFinite(v)) v = 1;
     v = byWeight(code)
-      ? Math.round(Math.min(10, Math.max(0.1, v)) * 100) / 100
-      : Math.min(10, Math.max(1, Math.round(v)));
+      ? Math.round(Math.min(QTY_MAX, Math.max(0.1, v)) * 100) / 100
+      : Math.min(QTY_MAX, Math.max(1, Math.round(v)));
     qty[code] = v;
     saveQty();
     await render();
@@ -1251,8 +1260,8 @@
     if (qup || qdown) {
       const code = qup ? qup.dataset.qup : qdown.dataset.qdown;
       const st = qtyStep(code);
-      // עיגול לשתי ספרות (לא לחצאים) - משקל מוקלד כמו 1.37 לא נמחק בלחיצת +/-
-      qty[code] = Math.round(Math.min(10, Math.max(st, qtyOf(code) + (qup ? st : -st))) * 100) / 100;
+      // עיגול לשתי ספרות - משקל מוקלד כמו 1.37 לא נמחק בלחיצת +/-
+      qty[code] = Math.round(Math.min(QTY_MAX, Math.max(st, qtyOf(code) + (qup ? st : -st))) * 100) / 100;
       saveQty();
       await render();
       return;

@@ -282,6 +282,10 @@ const IMPL = {
 // ---------- בחירת סניף מייצג לכל מחוז ----------
 const NOT_CONSUMER = /סיטונ|מפיץ|אונליין|אינטרנט|online|מרלוג|מחסן מרכזי/i;
 const PREFER_FORMAT = { shufersal: [/דיל/, /שלי/] }; // פורמט צרכני מועדף לפי רשת
+// שכונות שרשתות רושמות כ"עיר" - נחשבות כעיר-האם בהעדפת סניף מייצג.
+// בלי זה "תלפיות" לא נספר כירושלים והנציג הירושלמי של אושר עד היה סניף
+// מהדרין בבית שמש - בלי דניאלה ודומיו (מבחר שונה) - במקום סניף ירושלמי אמיתי
+const NEIGH_CITY = { 'תלפיות': 'ירושלים', 'מלחה': 'ירושלים', 'גבעת שאול': 'ירושלים', 'רוממה': 'ירושלים', 'קרית חיים': 'חיפה', 'קרית אליעזר': 'חיפה' };
 
 function chooseBranches(chain, stores, existing) {
   const byDistrict = {};
@@ -301,8 +305,12 @@ function chooseBranches(chain, stores, existing) {
       return r;
     };
     let pick = null;
+    const cityOf = (s) => {
+      const c = normalizeCity(s.city);
+      return NEIGH_CITY[c] || c;
+    };
     for (const city of PREFERRED[d.id] || []) {
-      const inCity = inD.filter((s) => normalizeCity(s.city).startsWith(city) || normalizeCity(s.name).includes(city));
+      const inCity = inD.filter((s) => cityOf(s).startsWith(city) || normalizeCity(s.name).includes(city) || NEIGH_CITY[normalizeCity(s.name)] === city);
       if (inCity.length) { pick = inCity.sort((a, b) => rank(a) - rank(b))[0]; break; }
     }
     byDistrict[d.id] = pick || inD.sort((a, b) => rank(a) - rank(b))[0];
