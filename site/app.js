@@ -100,7 +100,12 @@
       renderAuthUI();
       const fab = $('listFab');
       if (fab) fab.hidden = false;
-      syncListSoon();
+      // התחברות במכשיר חדש: אם לענן יש רשימה עדכנית יותר - מאמצים אותה, לא דורסים
+      adoptCloudList().then(async (got) => {
+        if (got) { updateModeUI(); renderFavSel(); await render(); }
+        else syncListSoon();
+      }).catch(() => {});
+      loadMyShared();
       showToast(msg || `ברוכים הבאים, ${me.name}! עכשיו אפשר עד 5 סניפים ועד 100 מוצרים.`);
       // הגיעו מקישור רשימה משותפת והתחברו עכשיו - טוענים את הרשימה
       if (window.__pendingShare) {
@@ -239,13 +244,17 @@
   try { nameMap = JSON.parse(localStorage.getItem('zulik-names')) || {}; } catch {}
   setInterval(() => localStorage.setItem('zulik-names', JSON.stringify(nameMap)), 4000);
   if (!basket.length) basket = sample.slice(0, LIMITS().basket);
-  // מחובר: כל שינוי בסל נדחף לענן (debounce) - הרשימה מסתנכרנת בין מכשירים
+  // מחובר: כל שינוי בסל/במועדפים נדחף לענן (debounce) - מסתנכרן בין מכשירים.
+  // חותמת-זמן מקומית מכריעה מי חדש יותר: מכשיר עם שינוי ישן מאמץ את הענן, לא דורס אותו
   let listSyncT = 0;
+  let listLocalTs = +localStorage.getItem('zulik-list-ts') || 0;
+  const listTouch = () => { listLocalTs = Date.now(); localStorage.setItem('zulik-list-ts', listLocalTs); };
   const syncListSoon = () => {
     if (!me) return;
+    listTouch();
     clearTimeout(listSyncT);
     listSyncT = setTimeout(() => {
-      fetch('/api/list', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: basket.map((c) => ({ c, q: qtyOf(c) })) }) }).catch(() => {});
+      fetch('/api/list', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: basket.map((c) => ({ c, q: qtyOf(c) })), favs }) }).catch(() => {});
     }, 1200);
   };
   const saveBasket = () => { localStorage.setItem('zulik-basket', JSON.stringify(basket)); syncListSoon(); };
@@ -297,6 +306,7 @@
     }
     else if (favValid(key)) favs.push(key);
     localStorage.setItem('zulik-favs2', JSON.stringify(favs));
+    syncListSoon(); // המועדפים מסתנכרנים לחשבון - אותם סניפים קבועים בכל מכשיר
     renderFavPanel();
     updateModeUI();
     await loadDistrict();
@@ -1328,19 +1338,17 @@
     if (b) await openProductCard(b.dataset.code);
   });
 
-  // ---------- הרשימה שלי: פאנל צף (למחוברים), סנכרון ענן ושיתוף בוואטסאפ ----------
+  // ---------- רשימות: הסל שלי + רשימה משותפת חיה (למחוברים) ----------
   const listWrap = document.createElement('div');
   listWrap.innerHTML = `
-    <button id="listFab" class="listfab" hidden aria-label="הרשימה שלי">🛒</button>
-    <div id="listPanel" class="listpanel" hidden role="dialog" aria-label="הרשימה שלי">
-      <div class="lphead"><b>🛒 הרשימה שלי</b><small>מסתנכרנת אוטומטית לחשבון שלך</small><button id="lpClose" aria-label="סגירה">✕</button></div>
-      <div id="lpItems" class="lpitems"></div>
-      <div class="lpbtns">
-        <button id="lpWa" class="lpbtn lpwa">שיתוף בוואטסאפ</button>
-        <button id="lpShare" class="lpbtn">📤 שיתוף…</button>
-        <button id="lpCopy" class="lpbtn">🔗 העתקת קישור</button>
+    <button id="listFab" class="listfab" hidden aria-label="הרשימות שלי">🛒<span id="listFabBadge" class="fabbadge" hidden></span></button>
+    <div id="listPanel" class="listpanel" hidden role="dialog" aria-label="רשימות">
+      <div class="lphead"><b>🛒 רשימות</b><button id="lpClose" aria-label="סגירה">✕</button></div>
+      <div class="lptabs">
+        <button id="lpTabMine" class="lptab active">שלי</button>
+        <button id="lpTabShared" class="lptab">משותפת <span id="lpTabBadge" class="fabbadge inline" hidden></span></button>
       </div>
-      <p class="lpnote">מי שמקבל את הקישור מתבקש להתחבר או להירשם (חינם) כדי לצפות ברשימה.</p>
+      <div id="lpBody"></div>
     </div>`;
   document.body.appendChild(listWrap);
   // ---------- פרטים אישיים + מחיקת חשבון ----------
@@ -1365,8 +1373,6 @@
         <div class="accrow"><span>סוג התחברות</span><b>${a.prov}</b></div>
         <div class="accrow"><span>חבר מאז</span><b>${fmtDate(a.created)}</b></div>
         <div class="accrow"><span>כניסה אחרונה</span><b>${fmtDate(a.lastLogin)}</b></div>
-        <div class="accrow"><span>מספר התחברויות</span><b>${a.logins}</b></div>
-        <div class="accrow"><span>מוצרים ברשימה המסונכרנת</span><b>${a.listCount}</b></div>
         ${a.admin ? '<div class="accrow"><span>הרשאה</span><b>🛠 מנהל</b></div>' : ''}
       </div>
       <button class="accdel" id="accDelBtn">מחיקת החשבון</button>
@@ -1392,53 +1398,179 @@
     });
   }
   const itemName = (c) => (byCode.get(c) || {}).n || nameMap[c] || 'מוצר';
-  function renderListPanel() {
-    $('lpItems').innerHTML = basket.length
-      ? basket.map((c) => `<div class="lpitem"><span>${itemName(c)}</span><b>${fmtQ(qtyOf(c))}${byWeight(c) ? ' ק"ג' : ''}</b></div>`).join('')
-      : '<p class="empty">הסל ריק - הוסיפו מוצרים מהחיפוש.</p>';
-  }
-  function openListPanel() {
-    renderListPanel();
-    $('listPanel').hidden = false;
-  }
-  $('listFab').addEventListener('click', openListPanel);
-  $('lpClose').addEventListener('click', () => { $('listPanel').hidden = true; });
-  let shareCache = null; // {sig, url} - לא יוצרים קישור חדש אם הרשימה לא השתנתה
-  async function shareUrl() {
-    const items = basket.map((c) => ({ c, q: qtyOf(c) }));
-    const sig = JSON.stringify(items);
-    if (shareCache && shareCache.sig === sig) return shareCache.url;
-    const r = await fetch('/api/list/share', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.id) { showToast(j.error === 'empty' ? 'הסל ריק - אין מה לשתף.' : 'השיתוף נכשל - נסו שוב.'); return null; }
-    shareCache = { sig, url: location.origin + '/?l=' + j.id };
-    return shareCache.url;
-  }
-  const shareText = (url) => `🛒 ${me ? me.name : ''} שיתף איתך רשימת קניות בסַלְזוֹל - השוואת מחירים בין הרשתות:\n${url}`;
-  $('lpWa').addEventListener('click', async () => { const u = await shareUrl(); if (u) window.open('https://wa.me/?text=' + encodeURIComponent(shareText(u)), '_blank'); });
-  $('lpShare').addEventListener('click', async () => {
-    const u = await shareUrl();
-    if (!u) return;
-    if (navigator.share) navigator.share({ title: 'רשימת קניות - סַלְזוֹל', text: shareText(u) }).catch(() => {});
-    else { navigator.clipboard.writeText(u); showToast('הקישור הועתק 🔗'); }
-  });
-  $('lpCopy').addEventListener('click', async () => { const u = await shareUrl(); if (u) { await navigator.clipboard.writeText(u); showToast('הקישור הועתק 🔗'); } });
+  const shareText = (url) => `🛒 ${me ? me.name : ''} שיתף איתך רשימת קניות בסַלְזוֹל - רשימה משותפת שכל חבר יכול לעדכן:\n${url}`;
 
-  async function importShared(j) {
-    let added = 0;
-    for (const it of j.items) {
-      if (!basket.includes(it.c)) {
-        if (basket.length >= LIMITS().basket) break;
-        basket.push(it.c);
-        added++;
-      }
-      if (it.q && it.q !== 1) qty[it.c] = it.q;
+  let lpTab = 'mine';
+  let sharedId = null;
+  let sharedDoc = null;
+  let sharedPushT = 0;
+  let sharedPollT = 0;
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) }).then((x) => x.json()).catch(() => null);
+  // תג "יש שינויים": כמה גרסאות עברו מאז שראית את הרשימה המשותפת
+  const badgeCount = () => (sharedDoc ? Math.max(0, (sharedDoc.rev || 1) - (sharedDoc.mySeen || 0)) : 0);
+  function updateBadges() {
+    const n = badgeCount();
+    for (const id of ['listFabBadge', 'lpTabBadge']) {
+      const el = $(id);
+      if (el) { el.hidden = !n; el.textContent = n; }
     }
-    saveBasket();
-    saveQty();
-    history.replaceState(null, '', location.pathname);
-    showToast(`🛒 הרשימה של <b>${j.from}</b> נטענה (${j.items.length} מוצרים${added < j.items.length ? `, ${added} חדשים` : ''}).`);
   }
+  async function loadMyShared() {
+    if (!me) return;
+    try {
+      const j = await fetch('/api/shared/mine').then((r) => (r.ok ? r.json() : null));
+      if (j && j.id) { sharedId = j.id; sharedDoc = j.doc; }
+      updateBadges();
+    } catch {}
+  }
+  const sharedLink = () => location.origin + '/?l=' + sharedId;
+
+  function renderMineTab() {
+    $('lpBody').innerHTML = `
+      <div class="lpitems">${basket.length
+        ? basket.map((c) => `<div class="lpitem"><span>${itemName(c)}</span><b>${fmtQ(qtyOf(c))}${byWeight(c) ? ' ק"ג' : ''}</b></div>`).join('')
+        : '<p class="empty">הסל ריק - הוסיפו מוצרים מהחיפוש.</p>'}</div>
+      <div class="lpbtns"><button id="lpMakeShared" class="lpbtn lpwa">${sharedId ? 'העתקת הסל לרשימה המשותפת' : 'הפיכה לרשימה משותפת'}</button></div>
+      <p class="lpnote">הסל מסתנכרן אוטומטית לחשבון. רשימה משותפת היא חיה - כל מי שמצטרף מהקישור רואה ומעדכן את אותה רשימה אחת.</p>`;
+    $('lpMakeShared').addEventListener('click', async () => {
+      if (!basket.length) { showToast('הסל ריק - אין מה לשתף.'); return; }
+      const items = basket.map((c) => ({ c, q: qtyOf(c), n: itemName(c) }));
+      if (!sharedId) {
+        const j = await post('/api/list/share', { items });
+        if (!j || !j.id) { showToast('השיתוף נכשל - נסו שוב.'); return; }
+        sharedId = j.id;
+        await loadMyShared();
+      } else if (sharedDoc) {
+        const cur = [...sharedDoc.items];
+        for (const it of items) if (!cur.some((x) => x.c === it.c)) cur.push(it);
+        await pushShared(cur);
+      }
+      setLpTab('shared');
+    });
+  }
+
+  async function pushShared(items) {
+    if (!sharedId || !sharedDoc) return;
+    sharedDoc.items = items;
+    const r = await post('/api/shared/' + sharedId, { action: 'update', items });
+    if (r && r.rev) { sharedDoc.rev = r.rev; sharedDoc.mySeen = r.rev; sharedDoc.updatedBy = me.name; sharedDoc.updated = new Date().toISOString(); }
+    updateBadges();
+  }
+  const pushSharedSoon = () => { clearTimeout(sharedPushT); sharedPushT = setTimeout(() => pushShared(sharedDoc.items), 900); };
+
+  function renderSharedTab() {
+    if (!sharedId || !sharedDoc) {
+      $('lpBody').innerHTML = `<p class="empty" style="padding:14px 4px">אין רשימה משותפת פעילה.<br>הפכו את הסל לרשימה משותפת (בטאב "שלי"), או היכנסו מקישור ששלח לכם חבר.</p>`;
+      return;
+    }
+    const d = sharedDoc;
+    const members = Object.values(d.members || {});
+    $('lpBody').innerHTML = `
+      <p class="lpmeta">👥 ${members.join(' · ')}<br><small>עדכון אחרון: ${d.updatedBy || d.ownerName} · ${d.updated ? fmtDT(d.updated) : ''} · גרסה ${d.rev}</small></p>
+      <div class="lpitems">${d.items.length
+        ? d.items.map((it, i) => `<div class="lpitem"><span>${it.n || itemName(it.c)}</span>
+            <span class="lpqty"><button class="qbtn" data-sdown="${i}">−</button><b>${fmtQ(it.q)}</b><button class="qbtn" data-sup="${i}">+</button><button class="rmv" data-srm="${i}" aria-label="הסרה">✕</button></span></div>`).join('')
+        : '<p class="empty">הרשימה ריקה.</p>'}</div>
+      <div class="lpbtns">
+        <button id="lpWa" class="lpbtn lpwa">וואטסאפ</button>
+        <button id="lpCopy" class="lpbtn">🔗 קישור</button>
+        <button id="lpToBasket" class="lpbtn">📊 לסל ההשוואה</button>
+        <button id="lpSave" class="lpbtn">💾 שמירה</button>
+      </div>
+      ${(d.saves || []).length ? `<div class="lpsaves"><small>שמירות אחרונות (עד 5):</small>${d.saves.map((s, i) => `<div class="lpsave"><span>${fmtDT(s.at)} · ${s.by} · ${s.items.length} מוצרים</span><button class="chip" data-restore="${i}">↩ שחזור</button></div>`).reverse().join('')}</div>` : ''}
+      <p class="lpnote"><button class="linkbtn" id="lpLeave">יציאה מהרשימה המשותפת</button></p>`;
+    $('lpWa').addEventListener('click', () => window.open('https://wa.me/?text=' + encodeURIComponent(shareText(sharedLink())), '_blank'));
+    $('lpCopy').addEventListener('click', async () => { await navigator.clipboard.writeText(sharedLink()); showToast('הקישור הועתק 🔗'); });
+    $('lpToBasket').addEventListener('click', async () => {
+      let added = 0;
+      for (const it of d.items) {
+        if (!basket.includes(it.c) && basket.length < LIMITS().basket) { basket.push(it.c); added++; }
+        if (it.q && it.q !== 1) qty[it.c] = it.q;
+        if (it.n) nameMap[it.c] = it.n;
+      }
+      saveBasket();
+      saveQty();
+      await render();
+      showToast(`הרשימה המשותפת נטענה לסל ההשוואה${added ? ` (${added} חדשים)` : ''}.`);
+    });
+    $('lpSave').addEventListener('click', async () => {
+      const r = await post('/api/shared/' + sharedId, { action: 'save' });
+      if (r && r.ok) { showToast('הרשימה נשמרה 💾'); await refreshShared(true); }
+    });
+    $('lpLeave').addEventListener('click', async () => {
+      if (!confirm('לצאת מהרשימה המשותפת?')) return;
+      await post('/api/shared/' + sharedId, { action: 'leave' });
+      sharedId = null;
+      sharedDoc = null;
+      updateBadges();
+      setLpTab('mine');
+    });
+  }
+  // עריכה בתוך הטאב המשותף: +/-/הסרה על כל שורה - נדחף לכולם
+  $('lpBody').addEventListener('click', async (ev) => {
+    if (lpTab !== 'shared' || !sharedDoc) return;
+    const rst = ev.target.closest('[data-restore]');
+    if (rst) {
+      const r = await post('/api/shared/' + sharedId, { action: 'restore', idx: +rst.dataset.restore });
+      if (r && r.ok) { showToast('הרשימה שוחזרה ↩'); await refreshShared(true); }
+      return;
+    }
+    const up = ev.target.closest('[data-sup]');
+    const down = ev.target.closest('[data-sdown]');
+    const rm = ev.target.closest('[data-srm]');
+    if (!up && !down && !rm) return;
+    const i = +(up ? up.dataset.sup : down ? down.dataset.sdown : rm.dataset.srm);
+    const it = sharedDoc.items[i];
+    if (!it) return;
+    if (rm) sharedDoc.items.splice(i, 1);
+    else {
+      const st = byWeight(it.c) ? 0.1 : 1;
+      it.q = Math.round(Math.min(30, Math.max(st, it.q + (up ? st : -st))) * 100) / 100;
+    }
+    renderSharedTab();
+    pushSharedSoon();
+  });
+
+  async function refreshShared(force) {
+    if (!sharedId) return;
+    const j = await fetch('/api/shared/' + sharedId).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (!j) return;
+    const changed = force || !sharedDoc || j.rev !== sharedDoc.rev;
+    const wasBy = j.updatedBy;
+    sharedDoc = j;
+    updateBadges();
+    if (lpTab === 'shared' && !$('listPanel').hidden && changed) {
+      renderSharedTab();
+      if (!force && wasBy && me && wasBy !== me.name) showToast(`הרשימה המשותפת עודכנה ע"י ${wasBy} 🔄`);
+      markSharedSeen();
+    }
+  }
+  function markSharedSeen() {
+    if (!sharedId || !sharedDoc) return;
+    if ((sharedDoc.mySeen || 0) >= (sharedDoc.rev || 1)) return;
+    sharedDoc.mySeen = sharedDoc.rev;
+    updateBadges();
+    post('/api/shared/' + sharedId, { action: 'seen' });
+  }
+  function setLpTab(t) {
+    lpTab = t;
+    $('lpTabMine').classList.toggle('active', t === 'mine');
+    $('lpTabShared').classList.toggle('active', t === 'shared');
+    if (t === 'mine') renderMineTab();
+    else { renderSharedTab(); markSharedSeen(); refreshShared(); }
+  }
+  function openListPanel(tab) {
+    $('listPanel').hidden = false;
+    setLpTab(tab || (badgeCount() ? 'shared' : lpTab));
+    // בזמן שהפאנל פתוח בטאב המשותף - בדיקת עדכונים מחברים כל 20 שניות
+    clearInterval(sharedPollT);
+    sharedPollT = setInterval(() => { if (!$('listPanel').hidden && lpTab === 'shared') refreshShared(); }, 20000);
+  }
+  $('listFab').addEventListener('click', () => openListPanel());
+  $('lpClose').addEventListener('click', () => { $('listPanel').hidden = true; clearInterval(sharedPollT); });
+  $('lpTabMine').addEventListener('click', () => setLpTab('mine'));
+  $('lpTabShared').addEventListener('click', () => setLpTab('shared'));
+
   async function tryLoadShared(id) {
     const r = await fetch('/api/shared/' + id);
     const j = await r.json().catch(() => ({}));
@@ -1449,11 +1581,23 @@
       authView('register');
       const note = document.createElement('p');
       note.className = 'sharednote';
-      note.innerHTML = `🛒 <b>${j.from}</b> שיתף איתך רשימת קניות - הירשמו או התחברו (חינם) כדי לצפות בה`;
+      note.innerHTML = `🛒 <b>${j.from}</b> שיתף איתך רשימת קניות משותפת - הירשמו או התחברו (חינם) כדי לצפות ולעדכן אותה`;
       $('authViews').prepend(note);
       return false;
     }
-    if (r.ok && Array.isArray(j.items)) { await importShared(j); return true; }
+    if (r.ok) {
+      // מחובר שהגיע מקישור: מצטרף לרשימה החיה - מעכשיו כל שינוי מסתנכרן לכולם
+      const jr = await post('/api/shared/' + id, { action: 'join' });
+      if (jr && jr.ok) {
+        sharedId = id;
+        sharedDoc = jr.doc;
+        history.replaceState(null, '', location.pathname);
+        updateBadges();
+        openListPanel('shared');
+        showToast(`🛒 הצטרפת לרשימה המשותפת של <b>${jr.doc.ownerName}</b> - כל שינוי מסתנכרן לכל החברים.`);
+        return true;
+      }
+    }
     if (r.status === 404) showToast('הקישור פג תוקף או שהרשימה נמחקה.');
     return false;
   }
@@ -1507,18 +1651,42 @@
 
   renderAuthUI();
   $('listFab').hidden = !me;
-  // מחובר: אימוץ רשימת הענן כשאין סל מקומי; אחרת דחיפת המקומי לענן
+  // מחובר: הרשימה והמועדפים מתמזגים בין המכשירים - החדש מנצח (לפי חותמת-זמן),
+  // כך שהטלפון והמחשב מציגים תמיד את אותה רשימה ואותם סניפים קבועים
+  let adoptedCloud = false;
+  async function adoptCloudList() {
+    if (!me) return false;
+    const j = await fetch('/api/list').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const cloud = j && j.list;
+    if (!cloud || !Array.isArray(cloud.items)) return false;
+    const cloudTs = cloud.updated ? new Date(cloud.updated).getTime() : 0;
+    if (cloudTs <= listLocalTs) return false;
+    basket = cloud.items.map((it) => it.c).slice(0, LIMITS().basket);
+    qty = {};
+    for (const it of cloud.items) if (it.q && it.q !== 1) qty[it.c] = it.q;
+    if (Array.isArray(cloud.favs)) favs = cloud.favs.filter((k) => branchByKey.has(k)).slice(0, LIMITS().favs);
+    localStorage.setItem('zulik-basket', JSON.stringify(basket));
+    localStorage.setItem('zulik-qty', JSON.stringify(qty));
+    localStorage.setItem('zulik-favs2', JSON.stringify(favs));
+    listLocalTs = cloudTs;
+    localStorage.setItem('zulik-list-ts', listLocalTs);
+    return true;
+  }
   if (me) {
     try {
-      const j = await fetch('/api/list').then((r) => (r.ok ? r.json() : null));
-      const cloud = j && j.list && Array.isArray(j.list.items) ? j.list.items : [];
-      if (cloud.length && !localStorage.getItem('zulik-basket')) {
-        basket = cloud.map((it) => it.c).slice(0, LIMITS().basket);
-        for (const it of cloud) if (it.q && it.q !== 1) qty[it.c] = it.q;
-        localStorage.setItem('zulik-basket', JSON.stringify(basket));
-        localStorage.setItem('zulik-qty', JSON.stringify(qty));
-      } else if (basket.length) syncListSoon();
+      adoptedCloud = await adoptCloudList();
+      if (!adoptedCloud && basket.length) syncListSoon();
     } catch {}
+    await loadMyShared(); // הרשימה המשותפת + תג ההתראות ("1" כשחבר שינה משהו)
+    // רענון עדין כל דקה: מכשיר אחר עדכן → מאמצים ומרעננים את התצוגה
+    setInterval(async () => {
+      if (await adoptCloudList()) {
+        updateModeUI();
+        renderFavSel();
+        await render();
+        if (!$('listPanel').hidden && lpTab === 'mine') renderMineTab();
+      }
+    }, 60000);
   }
   await loadDistrict();
   renderDistrictUI();
@@ -1527,9 +1695,6 @@
   if (mode === 'fav') renderFavPanel();
   await render();
   // קישור רשימה משותפת (?l=<id>) - אחרי שהכל נטען
-  const sharedId = new URLSearchParams(location.search).get('l');
-  if (sharedId) {
-    const ok = await tryLoadShared(sharedId);
-    if (ok) await render();
-  }
+  const sharedLinkId = new URLSearchParams(location.search).get('l');
+  if (sharedLinkId) await tryLoadShared(sharedLinkId);
 })();

@@ -250,7 +250,7 @@ footer a { color: var(--text-2); }
   /* בורר הכמות (−/+) וה-✕ בשורה שנייה מתחת לשם המוצר - בעמודה צרה בקצה הם כיסו
      את עמודת הסניף האחרונה משמאל וטאפ שם שינה כמות במקום לפתוח את המוצר */
   .row .rowtools {
-    grid-row: 2; grid-column: 1; justify-content: flex-start;
+    grid-row: 2; grid-column: 1; justify-content: flex-end; /* בצד שמאל, כמו במחשב */
     position: sticky; right: 0; z-index: 2;
     background: var(--surface); box-shadow: -8px 0 0 var(--surface);
   }
@@ -463,6 +463,21 @@ footer a { color: var(--text-2); }
 .lpwa { background: #25d366; color: #fff; border-color: #25d366; }
 .lpwa:hover { color: #fff; filter: brightness(0.95); }
 .lpnote { font-size: 11px; color: var(--text-3); margin-top: 8px; line-height: 1.5; }
+/* טאבים בפאנל הרשימות + תג שינויים אדום */
+.lptabs { display: flex; gap: 6px; padding: 10px 0 4px; }
+.lptab { flex: 1; border: 0.5px solid var(--border-strong); background: var(--surface-2); border-radius: 9px; padding: 7px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-2); }
+.lptab.active { background: var(--good-bg); color: var(--good-text); border-color: var(--good-border); }
+.fabbadge { position: absolute; top: -4px; left: -4px; min-width: 18px; height: 18px; border-radius: 999px; background: #d92f2f; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.fabbadge.inline { position: static; display: inline-flex; vertical-align: middle; }
+.listfab { position: fixed; }
+.lpmeta { font-size: 12.5px; margin: 8px 0 2px; }
+.lpmeta small { color: var(--text-3); }
+.lpqty { display: inline-flex; align-items: center; gap: 3px; flex: none; }
+.lpqty b { min-width: 26px; text-align: center; color: var(--good-text); }
+.lpsaves { border-top: 0.5px solid var(--border); margin-top: 8px; padding-top: 6px; }
+.lpsaves > small { color: var(--text-3); }
+.lpsave { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+.lpsave span { color: var(--text-2); }
 .sharednote { background: var(--good-bg); color: var(--good-text); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 10px; }
 
 /* ---------- פרטים אישיים ---------- */

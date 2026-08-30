@@ -7,7 +7,7 @@
 <title>סלזול — פאנל ניהול</title>
 <meta name="robots" content="noindex">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?b=48">
+<link rel="stylesheet" href="style.css?b=59">
 <style>
   .admtable { width: 100%; border-collapse: collapse; font-size: 14px; }
   .admtable th, .admtable td { padding: 8px 10px; text-align: right; border-bottom: 0.5px solid var(--border); }
@@ -29,7 +29,7 @@
     <h2 style="margin:0 0 4px">🛠 פאנל ניהול — משתמשים</h2>
     <p class="admstat" id="stat">טוען…</p>
     <div id="tablewrap" style="max-height:none"><table class="admtable" id="tbl" hidden>
-      <thead><tr><th></th><th>שם</th><th>אימייל</th><th>נרשם</th><th>כניסה אחרונה</th><th>כניסות</th><th>תפקיד</th><th></th></tr></thead>
+      <thead><tr><th></th><th>שם</th><th>אימייל</th><th>חיבור</th><th>נרשם</th><th>כניסה אחרונה</th><th>כניסות</th><th>פעיל</th><th>רשימה</th><th>רשימה משותפת</th><th>תפקיד</th><th></th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
   </div>
@@ -45,16 +45,31 @@
     const r = await fetch('/api/admin/users').then((x) => (x.ok ? x.json() : null)).catch(() => null);
     if (!r) { stat.textContent = 'שגיאה בטעינת המשתמשים.'; return; }
     const admins = r.users.filter((u) => u.role === 'admin' || u.role === 'root').length;
-    stat.innerHTML = `<b>${r.users.length}</b> משתמשים רשומים · ${admins} מנהלים`;
-    document.getElementById('rows').innerHTML = r.users.map((u) => `<tr>
+    const week = Date.now() - 7 * 864e5;
+    const active7 = r.users.filter((u) => u.lastLogin && new Date(u.lastLogin) > week).length;
+    const google = r.users.filter((u) => u.prov === 'Google').length;
+    const withList = r.users.filter((u) => u.listCount > 0).length;
+    const withShared = r.users.filter((u) => u.shared).length;
+    const totalItems = r.users.reduce((n, u) => n + (u.listCount || 0), 0);
+    stat.innerHTML = `<b>${r.users.length}</b> משתמשים · ${admins} מנהלים · ${active7} פעילים בשבוע האחרון · `
+      + `${google} Google / ${r.users.length - google} אימייל · ${withList} עם רשימה (${totalItems} מוצרים סה"כ) · ${withShared} ברשימות משותפות`;
+    const daysAgo = (iso) => iso ? Math.floor((Date.now() - new Date(iso)) / 864e5) : null;
+    document.getElementById('rows').innerHTML = r.users.map((u) => {
+      const d = daysAgo(u.lastLogin);
+      const activeDot = d === null ? '' : d <= 7 ? '🟢' : d <= 30 ? '🟡' : '🔴';
+      return `<tr>
       <td>${u.picture ? `<img src="${u.picture}" alt="">` : ''}</td>
       <td><b>${u.name || ''}</b></td><td>${u.email}</td>
+      <td>${u.prov}</td>
       <td>${fmtD(u.created)}</td><td>${fmtD(u.lastLogin)}</td><td>${u.logins}</td>
+      <td title="${d === null ? '' : 'לפני ' + d + ' ימים'}">${activeDot}</td>
+      <td>${u.listCount ? `${u.listCount} מוצרים<br><small>${fmtD(u.listUpdated)}</small>` : '—'}</td>
+      <td>${u.shared ? `👥 ${u.shared.members} חברים · גרסה ${u.shared.rev}<br><small>${u.shared.saves} שמירות · ${fmtD(u.shared.updated)}</small>` : '—'}</td>
       <td>${u.role === 'root' ? '👑 מנהל ראשי' : u.role === 'admin' ? '🛠 מנהל' : ''}</td>
       <td>${u.role === 'root' ? '' : u.role === 'admin'
         ? `<button class="chip" data-sub="${u.sub}" data-role="user">הסרת ניהול</button>`
         : `<button class="chip" data-sub="${u.sub}" data-role="admin">הפיכה למנהל</button>`}</td>
-    </tr>`).join('');
+    </tr>`; }).join('');
     document.getElementById('tbl').hidden = false;
   }
   document.getElementById('rows').addEventListener('click', async (ev) => {

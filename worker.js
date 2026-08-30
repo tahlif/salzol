@@ -184,16 +184,29 @@ export default {
       const s = await readSession(env, request);
       if (!(await isAdmin(env, s))) return json({ error: 'forbidden' }, 403);
       const users = [];
+      const shareCache = {};
       let cursor;
       do {
         const page = await env.USERS.list({ prefix: 'user:', cursor });
         for (const k of page.keys) {
           const u = await env.USERS.get(k.name, 'json');
-          if (u) users.push({
+          if (!u) continue;
+          // העשרה לפאנל: הרשימה המסונכרנת + הרשימה המשותפת של כל משתמש
+          const list = await env.USERS.get('list:' + u.sub, 'json');
+          let shared = null;
+          if (u.sharedList) {
+            if (!(u.sharedList in shareCache)) shareCache[u.sharedList] = await env.USERS.get('share:' + u.sharedList, 'json');
+            const sd = shareCache[u.sharedList];
+            if (sd) shared = { id: u.sharedList, members: Object.keys(sd.members || {}).length, rev: sd.rev || 1, updated: sd.updated || '', saves: (sd.saves || []).length };
+          }
+          users.push({
             sub: u.sub, email: u.email, name: u.name, picture: u.picture,
             created: u.created, lastLogin: u.lastLogin, logins: u.logins || 1,
             role: isRootAdmin(env, u.email) ? 'root' : (u.role || ''),
             prov: String(u.sub || '').startsWith('local:') ? 'מייל' : 'Google',
+            listCount: list && list.items ? list.items.length : 0,
+            listUpdated: (list && list.updated) || '',
+            shared,
           });
         }
         cursor = page.list_complete ? null : page.cursor;
@@ -259,32 +272,120 @@ export default {
         let b = {};
         try { b = await request.json(); } catch {}
         const items = sanitizeItems(b.items);
-        await env.USERS.put('list:' + s.sub, JSON.stringify({ items, updated: new Date().toISOString() }));
+        // גם הסניפים הקבועים מסתנכרנים לחשבון - אותם מועדפים בטלפון ובמחשב
+        const favs = (Array.isArray(b.favs) ? b.favs : []).slice(0, 5).map(String).filter((x) => /^[a-z0-9]+:[\w-]+$/i.test(x));
+        await env.USERS.put('list:' + s.sub, JSON.stringify({ items, favs, updated: new Date().toISOString() }));
         return json({ ok: true, count: items.length });
       }
     }
 
-    // יצירת קישור שיתוף (תקף 60 יום) - צילום של הרשימה הנוכחית
+    // ---------- רשימה משותפת חיה: מסמך אחד לכל החברים, גרסאות, שמירות ----------
+    // share:<id> = {owner, ownerName, members:{sub:name}, items:[{c,q,n}], rev,
+    //               updated, updatedBy, seen:{sub:rev}, saves:[{at,by,items}] (עד 5)}
+    const SHARE_TTL = { expirationTtl: 180 * 86400 };
+    const putShare = (id, doc) => env.USERS.put('share:' + id, JSON.stringify(doc), SHARE_TTL);
+    const sanitizeShared = (raw) => (Array.isArray(raw) ? raw : [])
+      .slice(0, 150)
+      .map((it) => ({ c: String(it.c || '').slice(0, 24), q: Math.max(0.1, Math.min(30, +it.q || 1)), n: String(it.n || '').slice(0, 80) }))
+      .filter((it) => /^[\w.-]+$/.test(it.c));
+
+    // יצירת רשימה משותפת חדשה מהסל הנוכחי - היוצר הוא החבר הראשון
     if (url.pathname === '/api/list/share' && request.method === 'POST') {
       const s = await readSession(env, request);
       if (!s) return json({ error: 'auth-required' }, 401);
       let b = {};
       try { b = await request.json(); } catch {}
-      const items = sanitizeItems(b.items);
+      const items = sanitizeShared(b.items);
       if (!items.length) return json({ error: 'empty' }, 400);
       const id = b64url(crypto.getRandomValues(new Uint8Array(9)));
-      await env.USERS.put('share:' + id, JSON.stringify({ owner: s.sub, name: s.name, items, created: new Date().toISOString() }), { expirationTtl: 60 * 86400 });
+      const now = new Date().toISOString();
+      await putShare(id, {
+        owner: s.sub, ownerName: s.name, members: { [s.sub]: s.name },
+        items, rev: 1, updated: now, updatedBy: s.name, seen: { [s.sub]: 1 }, saves: [],
+      });
+      const u = await env.USERS.get('user:' + s.sub, 'json');
+      if (u) { u.sharedList = id; await env.USERS.put('user:' + s.sub, JSON.stringify(u)); }
       return json({ id });
     }
 
-    // צפייה ברשימה משותפת - מחייבת חשבון; לאורח חושפים רק את שם המשתף (למסך ההרשמה)
+    // הרשימה המשותפת הפעילה של המשתמש (לתג ההתראות ולטאב)
+    if (url.pathname === '/api/shared/mine') {
+      const s = await readSession(env, request);
+      if (!s) return json({ error: 'auth-required' }, 401);
+      const u = await env.USERS.get('user:' + s.sub, 'json');
+      if (!u || !u.sharedList) return json({ id: null });
+      const sh = await env.USERS.get('share:' + u.sharedList, 'json');
+      if (!sh) return json({ id: null });
+      return json({ id: u.sharedList, doc: { ...sh, mySeen: (sh.seen || {})[s.sub] || 0 } });
+    }
+
     if (url.pathname.startsWith('/api/shared/')) {
       const id = (url.pathname.split('/')[3] || '').replace(/[^\w-]/g, '');
       const sh = await env.USERS.get('share:' + id, 'json');
       if (!sh) return json({ error: 'not-found' }, 404);
       const s = await readSession(env, request);
-      if (!s) return json({ error: 'auth-required', from: sh.name }, 401);
-      return json({ from: sh.name, items: sh.items, created: sh.created });
+      // אורח: רק שם המשתף - למסך "הירשמו כדי לצפות"
+      if (!s) return json({ error: 'auth-required', from: sh.ownerName || sh.name }, 401);
+
+      if (request.method === 'GET') return json({ ...sh, mySeen: (sh.seen || {})[s.sub] || 0 });
+
+      if (request.method === 'POST') {
+        let b = {};
+        try { b = await request.json(); } catch {}
+        const isMember = !!(sh.members && sh.members[s.sub]);
+        sh.members = sh.members || {};
+        sh.seen = sh.seen || {};
+        sh.saves = sh.saves || [];
+        if (b.action === 'join') {
+          sh.members[s.sub] = s.name;
+          sh.seen[s.sub] = sh.rev || 1;
+          await putShare(id, sh);
+          const u = await env.USERS.get('user:' + s.sub, 'json');
+          if (u) { u.sharedList = id; await env.USERS.put('user:' + s.sub, JSON.stringify(u)); }
+          return json({ ok: true, doc: { ...sh, mySeen: sh.seen[s.sub] } });
+        }
+        if (!isMember) return json({ error: 'not-member' }, 403);
+        if (b.action === 'update') {
+          sh.items = sanitizeShared(b.items);
+          sh.rev = (sh.rev || 1) + 1;
+          sh.updated = new Date().toISOString();
+          sh.updatedBy = s.name;
+          sh.seen[s.sub] = sh.rev; // מי ששינה כבר ראה
+          await putShare(id, sh);
+          return json({ ok: true, rev: sh.rev });
+        }
+        if (b.action === 'seen') {
+          sh.seen[s.sub] = sh.rev || 1;
+          await putShare(id, sh);
+          return json({ ok: true });
+        }
+        if (b.action === 'save') {
+          sh.saves.push({ at: new Date().toISOString(), by: s.name, items: sh.items });
+          sh.saves = sh.saves.slice(-5); // עד 5 שמירות - הישנה ביותר נדחקת החוצה
+          await putShare(id, sh);
+          return json({ ok: true, saves: sh.saves.length });
+        }
+        if (b.action === 'restore') {
+          const idx = +b.idx;
+          if (!(idx >= 0 && idx < sh.saves.length)) return json({ error: 'bad-index' }, 400);
+          sh.items = sh.saves[idx].items;
+          sh.rev = (sh.rev || 1) + 1;
+          sh.updated = new Date().toISOString();
+          sh.updatedBy = s.name;
+          sh.seen[s.sub] = sh.rev;
+          await putShare(id, sh);
+          return json({ ok: true, rev: sh.rev });
+        }
+        if (b.action === 'leave') {
+          delete sh.members[s.sub];
+          delete sh.seen[s.sub];
+          await putShare(id, sh);
+          const u = await env.USERS.get('user:' + s.sub, 'json');
+          if (u && u.sharedList === id) { delete u.sharedList; await env.USERS.put('user:' + s.sub, JSON.stringify(u)); }
+          return json({ ok: true });
+        }
+        return json({ error: 'bad-action' }, 400);
+      }
     }
 
     return json({ error: 'not-found' }, 404);
