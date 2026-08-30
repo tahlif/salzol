@@ -7,7 +7,26 @@ on:
     # פשוט לא תמצא שינויים (ההיסטוריה שומרת שינויים-בלבד, ריצה כפולה לא מזיקה).
     - cron: '17 4 * * *'   # 07:17 שעון ישראל בקיץ
     - cron: '47 5 * * *'   # 08:47 - ריצת גיבוי
+    # עדכוני יום - החוק מחייב את הרשתות לפרסם שינוי תוך שעה, אז ריצה שעתית
+    # תופסת שינויים ומבצעים באותו יום; ריפו ציבורי = דקות Actions חינם ללא הגבלה
+    - cron: '23 6 * * *'   # 09:23 IL
+    - cron: '23 7 * * *'   # 10:23
+    - cron: '23 8 * * *'   # 11:23
+    - cron: '23 9 * * *'   # 12:23
+    - cron: '23 10 * * *'  # 13:23
+    - cron: '23 11 * * *'  # 14:23
+    - cron: '23 12 * * *'  # 15:23
+    - cron: '23 13 * * *'  # 16:23
+    - cron: '23 14 * * *'  # 17:23
+    - cron: '23 15 * * *'  # 18:23
+    - cron: '23 16 * * *'  # 19:23
+    - cron: '23 17 * * *'  # 20:23
   workflow_dispatch: {}     # הרצה ידנית מה-UI של גיטהאב
+
+# ריצות לא רצות זו על זו - ריצה שמגיעה כשקודמתה עוד עובדת ממתינה בתור
+concurrency:
+  group: nightly-prices
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -72,7 +91,8 @@ jobs:
           git config user.name "zolli-bot"
           git config user.email "actions@github.com"
           git add site/data pipeline/geo.json pipeline/branches.json pipeline/osm-pois.json \
-                  pipeline/city-geo.json pipeline/city-geo-google.json pipeline/top200.json pipeline/geo-report.txt
+                  pipeline/city-geo.json pipeline/city-geo-google.json pipeline/top200.json pipeline/geo-report.txt \
+                  pipeline/social-state.json
           git diff --cached --quiet || git commit -m "עדכון מחירים יומי $(date +%d.%m.%Y)"
           # חסינות מפני push מקביל; בקונפליקט בקבצים גנרטיביים -X theirs משאיר את
           # הדאטה שנבנה כאן עכשיו (ברי-בייס theirs = הקומיט המקומי המוחזר)

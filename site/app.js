@@ -203,7 +203,7 @@
   };
   const qtyStep = (code) => (byWeight(code) ? 0.5 : 1);
   const qtyOf = (code) => Math.min(10, Math.max(qtyStep(code), qty[code] || 1));
-  const fmtQ = (q) => (q % 1 ? q.toFixed(1) : String(q));
+  const fmtQ = (q) => String(Math.round(q * 100) / 100); // 1.37 נשאר 1.37, לא מעוגל ל-1.4
   const saveQty = () => localStorage.setItem('zulik-qty', JSON.stringify(qty));
   let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
   let noClub = localStorage.getItem('zulik-noclub') === '1'; // הסתרת מבצעים שדורשים מועדון
@@ -512,21 +512,40 @@
   const sugEl = $('suggest');
   let active = -1;
   let matches = [];
+  let allMatches = [];
+  let shown = 10;
+  let decorate = (e) => e;
   function renderSuggest() {
     if (!matches.length) { sugEl.hidden = true; sugEl.innerHTML = ''; return; }
     sugEl.innerHTML = matches.map((e, i) => {
       const mcFlag = flagImg(e.mc || (e.il ? 'IL' : ''));
       const meta = [
-        e.p != null ? `<b class="sgprice">מ-${fmt(e.p)}</b>` : '',
         e.pm ? '<span class="sgpromo">🏷 במבצע</span>' : '',
         e.dn ? '<span class="chgdown">▼ הוזל</span>' : '',
         e.b, fmtPkg(e.u),
         mcFlag ? `${mcFlag} ${COUNTRY_NAME[e.mc] || ''}`.trim() : '',
       ].filter(Boolean).join(' · ');
-      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favAll ? `<span class="sgfav sgfavall">⭐ בכל המועדפים שלך</span><br>` : e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}${e.favIn.length > 1 ? ` +${e.favIn.length - 1}` : ''}</span><br>` : ''}${e.ch.length} רשתות</span></button>`;
+      // מחיר: מהאינדקס אם קיים (e.p), אחרת placeholder שמתמלא מהשארד ברקע
+      const priceB = e.p != null ? `<b class="sgprice">מ-${fmt(e.p)}</b>` : `<b class="sgprice" data-code="${e.c}"></b>`;
+      const inBasket = basket.includes(e.c);
+      return `<button data-code="${e.c}" class="${i === active ? 'active' : ''}"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="thumb sgthumb" data-code="${e.c}"></span><span class="sgtext"><span class="sgname">${e.n}</span>${meta ? `<small class="sgmeta">${meta}</small>` : ''}</span></span><span class="chains">${e.favAll ? `<span class="sgfav sgfavall">⭐ בכל המועדפים שלך</span><br>` : e.favIn && e.favIn.length ? `<span class="sgfav">⭐ יש ב${chainName[e.favIn[0]]}${e.favIn.length > 1 ? ` +${e.favIn.length - 1}` : ''}</span><br>` : ''}${e.ch.length} רשתות<br>${priceB}</span><span class="sgadd${inBasket ? ' insg' : ''}" data-add="${e.c}" data-tip="${inBasket ? 'בסל - לחיצה מוסיפה עוד' : 'הוספה לרשימה בלי לסגור את החיפוש'}">${inBasket ? '✓' : '+'}</span></button>`;
     }).join('');
     sugEl.hidden = false;
     hydrateSuggestImages();
+    clearTimeout(priceHydT);
+    priceHydT = setTimeout(hydrateSuggestPrices, 250);
+  }
+  // השלמת מחיר "מ-₪X" להצעות שאין להן p באינדקס - נשלף מהשארד של המחוז הנוכחי
+  let priceHydT = 0;
+  async function hydrateSuggestPrices() {
+    const dist = useFav() && favCols().length ? favCols()[0].district : district;
+    await Promise.all([...sugEl.querySelectorAll('.sgprice[data-code]')].map(async (el) => {
+      const rec = await loadProductIn(dist, el.dataset.code);
+      const ps = rec ? Object.values(rec.prices).map((x) => x.p).filter((v) => typeof v === 'number') : [];
+      if (!ps.length) { if (el.previousSibling && el.previousSibling.nodeName === 'BR') el.previousSibling.remove(); el.remove(); return; }
+      el.textContent = `מ-${fmt(Math.min(...ps))}`;
+      el.removeAttribute('data-code');
+    }));
   }
   async function hydrateSuggestImages() {
     // בלי מנעול "עסוק" - חיפוש חדש תמיד מטעין; fetchImg מונע כפילויות בעצמו
@@ -572,13 +591,15 @@
       if (n.startsWith(q)) return 1;
       return 3;
     };
-    // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
-    matches = index
+    // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף.
+    // כל התוצאות נשמרות; מוצגות 10 וגלילה לתחתית פותחת עוד 10 (פילטר "מבצע" = כל המבצעים)
+    decorate = (e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [], favAll: allFav(e) });
+    allMatches = index
       .filter(passFilters)
       .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t) || (e.c.startsWith('v-') && t.length >= 3 && n.includes(t.slice(0, -1)))); })
-      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (rel(a) - rel(b)) || (allFav(b) - allFav(a)) || (favCount(b) - favCount(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
-      .slice(0, 12)
-      .map((e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [], favAll: allFav(e) }));
+      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (rel(a) - rel(b)) || (allFav(b) - allFav(a)) || (favCount(b) - favCount(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length));
+    shown = 10;
+    matches = allMatches.slice(0, shown).map(decorate);
     renderSuggest();
   }
   searchEl.addEventListener('input', computeMatches);
@@ -589,32 +610,56 @@
     else if (ev.key === 'Enter' && matches.length) { add(matches[Math.max(active, 0)].c); ev.preventDefault(); }
     else if (ev.key === 'Escape') { matches = []; renderSuggest(); }
   });
-  sugEl.addEventListener('click', (ev) => {
+  sugEl.addEventListener('click', async (ev) => {
+    // ➕ מוסיף לרשימה בלי לסגור את חלונית החיפוש - אפשר להוסיף כמה מוצרים ברצף
+    const plus = ev.target.closest('.sgadd');
+    if (plus) {
+      ev.stopPropagation();
+      const ok = await addToBasket(plus.dataset.add);
+      if (ok) { const st = sugEl.scrollTop; renderSuggest(); sugEl.scrollTop = st; }
+      return;
+    }
     const b = ev.target.closest('button[data-code]');
     if (b) add(b.dataset.code);
+  });
+  // גלילה לתחתית ההצעות פותחת עוד 10 תוצאות
+  sugEl.addEventListener('scroll', () => {
+    if (shown >= allMatches.length) return;
+    if (sugEl.scrollTop + sugEl.clientHeight < sugEl.scrollHeight - 80) return;
+    shown += 10;
+    const st = sugEl.scrollTop;
+    matches = allMatches.slice(0, shown).map(decorate);
+    renderSuggest();
+    sugEl.scrollTop = st;
   });
   document.addEventListener('click', (ev) => {
     // קליק על צ'יפ פילטר לא סוגר את ההצעות - הוא בדיוק מה שפותח אותן
     if (!ev.target.closest('.searchbox') && !ev.target.closest('#sampleChips')) { matches = []; renderSuggest(); }
   });
-  async function add(code) {
-    searchEl.value = ''; matches = []; renderSuggest();
+  // הוספה לסל בלי לגעת בחלונית החיפוש (משרת גם את ➕ שבהצעות); מחזירה הצלחה
+  async function addToBasket(code) {
     // בחירה חוזרת של מוצר שכבר בסל = עוד יחידה/חצי ק"ג (עד 10) - כל המחירים והסה"כ מתעדכנים
     if (basket.includes(code)) {
-      qty[code] = Math.round(Math.min(10, qtyOf(code) + qtyStep(code)) * 2) / 2;
+      qty[code] = Math.round(Math.min(10, qtyOf(code) + qtyStep(code)) * 100) / 100;
       saveQty();
       await render();
-      return;
+      return true;
     }
-    if (!basket.includes(code) && basket.length >= LIMITS().basket) {
+    if (basket.length >= LIMITS().basket) {
       showToast(me
         ? `הגעת למקסימום - עד ${LIMITS().basket} מוצרים בהשוואה.`
         : 'בחינם משווים עד 5 מוצרים. <b>התחברו עם Google</b> (למעלה) להשוואה של עד 100 מוצרים ו-5 סניפים - בחינם.');
-      return;
+      return false;
     }
     if (byCode.has(code)) nameMap[code] = byCode.get(code).n; // השם נלכד מיד - גם אם המוצר לא קיים באזור אחר
-    if (!basket.includes(code)) { basket.push(code); saveBasket(); }
+    basket.push(code);
+    saveBasket();
     await render();
+    return true;
+  }
+  async function add(code) {
+    searchEl.value = ''; matches = []; allMatches = []; renderSuggest();
+    await addToBasket(code);
   }
 
   // ---------- צ'יפים לדוגמה ----------
@@ -939,7 +984,7 @@
         html: `<div class="rowwrap"><div class="row" data-code="${code}">
         <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${pkg ? `<span class="pkg">${pkg}</span>` : ''}${flagHtml(anyRec.mc)}${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
         <div class="prices-m">${cells}</div>
-        <span class="rowtools"><span class="qtybox" data-tip="${byWeight(code) ? 'משקל בק&quot;ג (חצאי ק&quot;ג, עד 10) - הסה&quot;כ לפי מחיר לק&quot;ג' : 'כמות בסל (עד 10) - הסה&quot;כ מוכפל'}"><button class="qbtn" data-qdown="${code}">−</button><b class="${q !== 1 ? 'qon' : ''}">${fmtQ(q)}</b><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
+        <span class="rowtools"><span class="qtybox" data-tip="${byWeight(code) ? 'משקל בק&quot;ג (עד 10) - אפשר להקליד משקל מדויק, הסה&quot;כ לפי מחיר לק&quot;ג' : 'כמות בסל (עד 10) - אפשר להקליד, הסה&quot;כ מוכפל'}"><button class="qbtn" data-qdown="${code}">−</button><input class="qinp ${q !== 1 ? 'qon' : ''}" data-qin="${code}" value="${fmtQ(q)}" type="text" inputmode="decimal" aria-label="${byWeight(code) ? 'משקל בק&quot;ג' : 'כמות'}"><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
       </div></div>` });
     });
 
@@ -1182,13 +1227,32 @@
   $('pcard').addEventListener('click', (ev) => { if (ev.target === $('pcard')) $('pcard').hidden = true; document.body.style.overflow = ''; });
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') $('pcard').hidden = true; document.body.style.overflow = ''; });
 
+  // הקלדת כמות/משקל ישירות בשדה: שקיל - עשרוני 0.1-10 ק"ג; יחידות - שלם 1-10
+  $('rows').addEventListener('change', async (ev) => {
+    const inp = ev.target.closest('.qinp');
+    if (!inp) return;
+    const code = inp.dataset.qin;
+    let v = parseFloat(String(inp.value).replace(',', '.'));
+    if (!isFinite(v)) v = 1;
+    v = byWeight(code)
+      ? Math.round(Math.min(10, Math.max(0.1, v)) * 100) / 100
+      : Math.min(10, Math.max(1, Math.round(v)));
+    qty[code] = v;
+    saveQty();
+    await render();
+  });
+  $('rows').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && ev.target.closest('.qinp')) { ev.preventDefault(); ev.target.blur(); }
+  });
   $('rows').addEventListener('click', async (ev) => {
     const qup = ev.target.closest('[data-qup]');
     const qdown = ev.target.closest('[data-qdown]');
+    if (ev.target.closest('.qinp')) return; // קליק בשדה הכמות לא פותח את כרטיס המוצר
     if (qup || qdown) {
       const code = qup ? qup.dataset.qup : qdown.dataset.qdown;
       const st = qtyStep(code);
-      qty[code] = Math.round(Math.min(10, Math.max(st, qtyOf(code) + (qup ? st : -st))) * 2) / 2;
+      // עיגול לשתי ספרות (לא לחצאים) - משקל מוקלד כמו 1.37 לא נמחק בלחיצת +/-
+      qty[code] = Math.round(Math.min(10, Math.max(st, qtyOf(code) + (qup ? st : -st))) * 100) / 100;
       saveQty();
       await render();
       return;

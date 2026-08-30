@@ -115,7 +115,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 
 /* הטבלה גוללת בתוך עצמה (אנכית ואופקית) - כך הכותרת נשארת דביקה תמיד */
 #tablewrap { overflow: auto; max-height: 72vh; }
-.thead, .row { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 82px; gap: 6px; align-items: center; }
+.thead, .row { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 96px; gap: 6px; align-items: center; }
 .prices-m { display: contents; }
 .thead {
   color: var(--text-2); font-size: 12px; padding: 8px 0;
@@ -220,7 +220,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
   .chg.cdown { color: #5dcaa5; }
 }
 
-.totals { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 82px; gap: 6px; padding: 12px 0 2px; border-top: 1px solid var(--border-strong); font-weight: 600; }
+.totals { display: grid; grid-template-columns: minmax(180px, 1fr) var(--pcols, repeat(3, minmax(56px, 84px))) 96px; gap: 6px; padding: 12px 0 2px; border-top: 1px solid var(--border-strong); font-weight: 600; }
 .totals div { text-align: center; font-variant-numeric: tabular-nums; }
 .totals .pname { text-align: right; }
 
@@ -255,6 +255,8 @@ footer a { color: var(--text-2); }
     background: var(--surface); box-shadow: -8px 0 0 var(--surface);
   }
   .row .rowtools .rmv { margin-top: 0; }
+  /* מתחת ל-16px מובייל (iOS) מזנק זום בפוקוס על שדה קלט */
+  .qinp { font-size: 16px; width: 42px; }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -419,6 +421,14 @@ footer a { color: var(--text-2); }
 .qtybox b.qon { color: var(--good-text); font-weight: 700; }
 .qbtn { border: 0; background: none; cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 3px; color: var(--text-3); }
 .qbtn:hover { color: var(--text); }
+/* שדה הכמות/משקל - ניתן להקלדה (עשרוני במוצרים שקילים) */
+.qinp { width: 32px; border: 0; background: none; text-align: center; font: inherit; font-size: 12.5px; font-weight: 500; color: var(--text-2); padding: 0; }
+.qinp.qon { color: var(--good-text); font-weight: 700; }
+.qinp:focus { outline: 1.5px solid var(--accent); border-radius: 6px; }
+/* ➕ בהצעות החיפוש - הוספה לרשימה בלי לסגור את החלונית */
+.sgadd { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 17px; line-height: 1; color: var(--text-2); margin-inline-start: 10px; }
+.sgadd:hover { color: var(--accent); border-color: var(--accent); }
+.sgadd.insg { color: var(--good-text); border-color: var(--good-border); background: var(--good-bg); }
 .sgfav { color: #b8860b; font-weight: 600; }
 /* כפתור התחברות + חלונית עם כפתור גוגל הרשמי */
 .loginbtn { font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; color: var(--good-text);
