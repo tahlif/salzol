@@ -218,6 +218,29 @@ export default {
       return json({ ok: true, email: u.email, role: u.role });
     }
 
+    // ---------- פרטים אישיים ומחיקת חשבון ----------
+    if (url.pathname === '/api/account') {
+      const s = await readSession(env, request);
+      if (!s) return json({ error: 'auth-required' }, 401);
+      const u = (await env.USERS.get('user:' + s.sub, 'json')) || {};
+      const list = await env.USERS.get('list:' + s.sub, 'json');
+      return json({
+        name: u.name || s.name, email: u.email || s.email, picture: u.picture || s.pic || '',
+        prov: String(s.sub || '').startsWith('local:') ? 'אימייל וסיסמה' : 'Google',
+        created: u.created || '', lastLogin: u.lastLogin || '', logins: u.logins || 1,
+        admin: await isAdmin(env, s), listCount: list && list.items ? list.items.length : 0,
+      });
+    }
+
+    // מחיקת חשבון לצמיתות: המשתמש + הרשימה המסונכרנת נמחקים מה-KV והסשן נסגר
+    if (url.pathname === '/api/account/delete' && request.method === 'POST') {
+      const s = await readSession(env, request);
+      if (!s) return json({ error: 'auth-required' }, 401);
+      await env.USERS.delete('user:' + s.sub);
+      await env.USERS.delete('list:' + s.sub);
+      return json({ ok: true }, 200, { 'set-cookie': sessionCookie('', 0) });
+    }
+
     // ---------- רשימת קניות מסונכרנת (למחוברים) + שיתוף ----------
     const sanitizeItems = (raw) => (Array.isArray(raw) ? raw : [])
       .slice(0, 150)

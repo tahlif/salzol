@@ -150,7 +150,8 @@
       box.innerHTML = `<button class="hamb" id="menuBtn" aria-label="תפריט">☰</button>
         <div class="menupop" id="menuPop" hidden>
           <div class="menuhead">${me.picture ? `<img src="${me.picture}" alt="">` : ''}<div><b>${me.name}</b><small>${me.email}</small></div></div>
-          <button class="menuitem" id="menuListBtn">🛒 הרשימה שלי + שיתוף</button>
+          <button class="menuitem" id="menuListBtn">🛒 שיתוף הרשימה</button>
+          <button class="menuitem" id="menuAccBtn">👤 פרטים אישיים</button>
           ${me.admin ? '<a class="menuitem" href="admin.html">🛠 פאנל ניהול</a>' : ''}
           <a class="menuitem" href="pages/contact.html">📨 צור קשר</a>
           <a class="menuitem" href="pages/terms.html">📄 תקנון שימוש</a>
@@ -159,6 +160,7 @@
           <button class="menuitem" id="logoutBtn">התנתקות</button>
         </div>`;
       box.querySelector('#menuListBtn').addEventListener('click', () => { box.querySelector('#menuPop').hidden = true; openListPanel(); });
+      box.querySelector('#menuAccBtn').addEventListener('click', () => { box.querySelector('#menuPop').hidden = true; openAccountModal(); });
       const pop = box.querySelector('#menuPop');
       box.querySelector('#menuBtn').addEventListener('click', (ev) => { ev.stopPropagation(); pop.hidden = !pop.hidden; });
       document.addEventListener('click', (ev) => { if (!pop.hidden && !ev.target.closest('#authBox')) pop.hidden = true; });
@@ -1341,6 +1343,54 @@
       <p class="lpnote">מי שמקבל את הקישור מתבקש להתחבר או להירשם (חינם) כדי לצפות ברשימה.</p>
     </div>`;
   document.body.appendChild(listWrap);
+  // ---------- פרטים אישיים + מחיקת חשבון ----------
+  const accModal = document.createElement('div');
+  accModal.className = 'pcard';
+  accModal.hidden = true;
+  accModal.innerHTML = `<div class="pcbox accbox" role="dialog" aria-modal="true"><button class="pcclose" id="accClose" aria-label="סגירה">✕</button><div id="accBody"></div></div>`;
+  document.body.appendChild(accModal);
+  accModal.querySelector('#accClose').addEventListener('click', () => { accModal.hidden = true; });
+  accModal.addEventListener('click', (ev) => { if (ev.target === accModal) accModal.hidden = true; });
+  async function openAccountModal() {
+    accModal.hidden = false;
+    const body = accModal.querySelector('#accBody');
+    body.innerHTML = '<p class="empty">טוען…</p>';
+    const a = await fetch('/api/account').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (!a) { body.innerHTML = '<p class="empty">לא הצלחנו לטעון את הפרטים - נסו שוב.</p>'; return; }
+    const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('he-IL') : '—');
+    body.innerHTML = `
+      <h3 class="acctitle">👤 פרטים אישיים</h3>
+      <div class="acchead">${a.picture ? `<img src="${a.picture}" alt="">` : ''}<div><b>${a.name}</b><small>${a.email}</small></div></div>
+      <div class="accrows">
+        <div class="accrow"><span>סוג התחברות</span><b>${a.prov}</b></div>
+        <div class="accrow"><span>חבר מאז</span><b>${fmtDate(a.created)}</b></div>
+        <div class="accrow"><span>כניסה אחרונה</span><b>${fmtDate(a.lastLogin)}</b></div>
+        <div class="accrow"><span>מספר התחברויות</span><b>${a.logins}</b></div>
+        <div class="accrow"><span>מוצרים ברשימה המסונכרנת</span><b>${a.listCount}</b></div>
+        ${a.admin ? '<div class="accrow"><span>הרשאה</span><b>🛠 מנהל</b></div>' : ''}
+      </div>
+      <button class="accdel" id="accDelBtn">מחיקת החשבון</button>
+      <p class="lpnote">מחיקת החשבון מוחקת לצמיתות את הפרטים והרשימה המסונכרנת מהשרתים שלנו. הסל בדפדפן הזה נשאר.</p>`;
+    const del = body.querySelector('#accDelBtn');
+    del.addEventListener('click', async () => {
+      if (!del.dataset.arm) {
+        del.dataset.arm = '1';
+        del.textContent = 'בטוחים? לחיצה נוספת תמחק לצמיתות';
+        del.classList.add('armed');
+        setTimeout(() => { if (del.isConnected) { delete del.dataset.arm; del.textContent = 'מחיקת החשבון'; del.classList.remove('armed'); } }, 6000);
+        return;
+      }
+      del.disabled = true;
+      const r = await fetch('/api/account/delete', { method: 'POST' }).catch(() => null);
+      if (!r || !r.ok) { del.disabled = false; showToast('המחיקה נכשלה - נסו שוב.'); return; }
+      accModal.hidden = true;
+      me = null;
+      renderAuthUI();
+      const fab = $('listFab');
+      if (fab) { fab.hidden = true; $('listPanel').hidden = true; }
+      showToast('החשבון נמחק לצמיתות. תודה שהייתם איתנו 🙏');
+    });
+  }
   const itemName = (c) => (byCode.get(c) || {}).n || nameMap[c] || 'מוצר';
   function renderListPanel() {
     $('lpItems').innerHTML = basket.length
