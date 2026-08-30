@@ -1059,10 +1059,15 @@
       totalsEl.innerHTML = `<div class="pname">סה"כ (${comparable} מוצרים ${useFav() ? 'בכל הסניפים' : 'בכל הרשתות'})</div>
         <div class="prices-m">${cols.map((c, i) => `<div class="price ${totals[i] === bestT ? 'best' : ''}" data-chain="${c.label}"><span class="pval">${fmt(totals[i])}</span></div>`).join('')}</div><div></div>`;
       totalsEl.hidden = false;
-      const bestCol = cols[totals.indexOf(bestT)];
+      // שוויון בין הזולים: מציינים את כולם במפורש, לא בוחרים אחד שרירותית
+      const bestCols = cols.filter((c, i) => totals[i] === bestT).map((c) => c.label);
+      const tie = bestCols.length > 1;
+      const bestK = useFav()
+        ? (tie ? 'הסניפים הזולים - שווים במחיר' : 'הסניף הזול מביניהם')
+        : (tie ? 'הסלים הזולים - שווים במחיר' : 'הסל הזול ב' + dMeta().he);
       const pct = worstT > 0 ? Math.round(((worstT - bestT) / worstT) * 100) : 0;
       metricsEl.innerHTML = `
-        <div class="metric"><p class="k">${useFav() ? 'הסניף הזול מביניהם' : 'הסל הזול ב' + dMeta().he}</p><p class="v">${bestCol.label}</p></div>
+        <div class="metric"><p class="k">${bestK}</p><p class="v">${tie ? '🤝 ' : ''}${bestCols.join(' / ')}</p></div>
         <div class="metric"><p class="k">חיסכון מול היקר</p><p class="v">${fmt(worstT - bestT)} <small>${pct}%-</small></p></div>
         <div class="metric"><p class="k">מוצרים בסל</p><p class="v">${basket.length}${(() => { const u = basket.reduce((n, c) => n + qtyOf(c), 0); return u > basket.length ? ` <small>· ${fmtQ(u)} יח'</small>` : ''; })()}</p></div>`;
       metricsEl.hidden = false;
