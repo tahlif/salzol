@@ -240,6 +240,10 @@ const uniqueProducts = new Set(); // פריטים ייחודיים בכל האר
 const SHRINK_FILE = path.join(DATA, 'shrink.json');
 let shrinkEvents = [];
 try { shrinkEvents = JSON.parse(fs.readFileSync(SHRINK_FILE, 'utf8')); } catch {}
+// כיווץ אמיתי הוא עדין (3%-50%). ירידה ל"1" או של פי 2+ היא היפוך פרשנות-יחידה
+// של רשת (חבילה⇄יחידות, ק"ג⇄100ג) - "36 חיתולים→1" הטעה לקוחות; מסננים גם אחורה
+const plausibleShrink = (q0, q1) => q1 > 1 && q1 >= q0 * 0.5;
+shrinkEvents = shrinkEvents.filter((e) => plausibleShrink(e.q0, e.q1));
 const shrinkSeen = new Set(shrinkEvents.map((e) => e.c + ':' + e.d));
 // עדכון היחידה ברשומה קיימת + זיהוי כיווץ. שינוי דורש רוב אמין (2+ רשתות מסכימות,
 // אלא אם המוצר קיים ברשת אחת בלבד) - כדי שרשת בודדת עם כמות שגויה לא תייצר התרעות שווא
@@ -250,13 +254,18 @@ function applyUnit(rec, code) {
   const [oldQ, oldK] = rec.u, [newQ, newK] = gv.u;
   if (oldK === newK && oldQ === newQ) return;
   if (gv.n < Math.min(2, gv.total)) return; // רוב לא אמין - לא נוגעים
-  if (oldK === newK && newQ < oldQ * 0.97 && rec.ud && rec.ud < today) {
+  if (oldK === newK && newQ < oldQ * 0.97 && plausibleShrink(oldQ, newQ) && rec.ud && rec.ud < today) {
     const key = code + ':' + today;
     if (!shrinkSeen.has(key)) {
       shrinkSeen.add(key);
       shrinkEvents.push({ c: code, n: rec.name, k: oldK, q0: oldQ, q1: newQ, d: today });
     }
     (rec.qh = rec.qh || [[rec.ud, oldQ]]).push([today, newQ]);
+  }
+  // ניקוי היסטוריית-כמות שנצברה מהיפוכי-יחידה (לפני שהוספנו את הסינון)
+  if (rec.qh) {
+    rec.qh = rec.qh.filter((p, i) => i === 0 || plausibleShrink(rec.qh[i - 1][1], p[1]) || p[1] >= rec.qh[i - 1][1]);
+    if (rec.qh.length < 2) delete rec.qh;
   }
   rec.u = gv.u;
   rec.ud = today;

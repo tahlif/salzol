@@ -218,6 +218,52 @@ export default {
       return json({ ok: true, email: u.email, role: u.role });
     }
 
+    // ---------- רשימת קניות מסונכרנת (למחוברים) + שיתוף ----------
+    const sanitizeItems = (raw) => (Array.isArray(raw) ? raw : [])
+      .slice(0, 150)
+      .map((it) => ({ c: String(it.c || '').slice(0, 24), q: Math.max(0.1, Math.min(30, +it.q || 1)) }))
+      .filter((it) => /^[\w.-]+$/.test(it.c));
+
+    // הרשימה האישית: נשמרת ב-KV לכל משתמש - מסתנכרנת בין מכשירים
+    if (url.pathname === '/api/list') {
+      const s = await readSession(env, request);
+      if (!s) return json({ error: 'auth-required' }, 401);
+      if (request.method === 'GET') {
+        const l = await env.USERS.get('list:' + s.sub, 'json');
+        return json({ list: l || null });
+      }
+      if (request.method === 'POST') {
+        let b = {};
+        try { b = await request.json(); } catch {}
+        const items = sanitizeItems(b.items);
+        await env.USERS.put('list:' + s.sub, JSON.stringify({ items, updated: new Date().toISOString() }));
+        return json({ ok: true, count: items.length });
+      }
+    }
+
+    // יצירת קישור שיתוף (תקף 60 יום) - צילום של הרשימה הנוכחית
+    if (url.pathname === '/api/list/share' && request.method === 'POST') {
+      const s = await readSession(env, request);
+      if (!s) return json({ error: 'auth-required' }, 401);
+      let b = {};
+      try { b = await request.json(); } catch {}
+      const items = sanitizeItems(b.items);
+      if (!items.length) return json({ error: 'empty' }, 400);
+      const id = b64url(crypto.getRandomValues(new Uint8Array(9)));
+      await env.USERS.put('share:' + id, JSON.stringify({ owner: s.sub, name: s.name, items, created: new Date().toISOString() }), { expirationTtl: 60 * 86400 });
+      return json({ id });
+    }
+
+    // צפייה ברשימה משותפת - מחייבת חשבון; לאורח חושפים רק את שם המשתף (למסך ההרשמה)
+    if (url.pathname.startsWith('/api/shared/')) {
+      const id = (url.pathname.split('/')[3] || '').replace(/[^\w-]/g, '');
+      const sh = await env.USERS.get('share:' + id, 'json');
+      if (!sh) return json({ error: 'not-found' }, 404);
+      const s = await readSession(env, request);
+      if (!s) return json({ error: 'auth-required', from: sh.name }, 401);
+      return json({ from: sh.name, items: sh.items, created: sh.created });
+    }
+
     return json({ error: 'not-found' }, 404);
   },
 };

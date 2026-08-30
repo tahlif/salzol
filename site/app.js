@@ -94,7 +94,21 @@
     $('authViews').querySelectorAll('[data-v]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); authView(a.dataset.v); }));
     const err = (code) => { const el = $('afErr'); el.textContent = AUTH_ERRS[code] || 'משהו השתבש - נסו שוב.'; el.hidden = false; };
     const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (x) => ({ ok: x.ok, j: await x.json().catch(() => ({})) }));
-    const loggedIn = (user, msg) => { me = user; authModal.hidden = true; renderAuthUI(); showToast(msg || `ברוכים הבאים, ${me.name}! עכשיו אפשר עד 5 סניפים ועד 100 מוצרים.`); };
+    const loggedIn = (user, msg) => {
+      me = user;
+      authModal.hidden = true;
+      renderAuthUI();
+      const fab = $('listFab');
+      if (fab) fab.hidden = false;
+      syncListSoon();
+      showToast(msg || `ברוכים הבאים, ${me.name}! עכשיו אפשר עד 5 סניפים ועד 100 מוצרים.`);
+      // הגיעו מקישור רשימה משותפת והתחברו עכשיו - טוענים את הרשימה
+      if (window.__pendingShare) {
+        const id = window.__pendingShare;
+        window.__pendingShare = null;
+        tryLoadShared(id).then((ok) => { if (ok) render(); });
+      }
+    };
     $('afGo').addEventListener('click', async () => {
       $('afGo').disabled = true;
       let r;
@@ -136,9 +150,15 @@
       box.innerHTML = `<button class="hamb" id="menuBtn" aria-label="תפריט">☰</button>
         <div class="menupop" id="menuPop" hidden>
           <div class="menuhead">${me.picture ? `<img src="${me.picture}" alt="">` : ''}<div><b>${me.name}</b><small>${me.email}</small></div></div>
+          <button class="menuitem" id="menuListBtn">🛒 הרשימה שלי + שיתוף</button>
           ${me.admin ? '<a class="menuitem" href="admin.html">🛠 פאנל ניהול</a>' : ''}
+          <a class="menuitem" href="pages/contact.html">📨 צור קשר</a>
+          <a class="menuitem" href="pages/terms.html">📄 תקנון שימוש</a>
+          <a class="menuitem" href="pages/accessibility.html">♿ הצהרת נגישות</a>
+          <a class="menuitem" href="pages/privacy.html">🔒 מדיניות פרטיות</a>
           <button class="menuitem" id="logoutBtn">התנתקות</button>
         </div>`;
+      box.querySelector('#menuListBtn').addEventListener('click', () => { box.querySelector('#menuPop').hidden = true; openListPanel(); });
       const pop = box.querySelector('#menuPop');
       box.querySelector('#menuBtn').addEventListener('click', (ev) => { ev.stopPropagation(); pop.hidden = !pop.hidden; });
       document.addEventListener('click', (ev) => { if (!pop.hidden && !ev.target.closest('#authBox')) pop.hidden = true; });
@@ -146,6 +166,8 @@
         await fetch('/api/logout', { method: 'POST' });
         me = null;
         renderAuthUI();
+        const fab = $('listFab');
+        if (fab) { fab.hidden = true; $('listPanel').hidden = true; }
         showToast('התנתקת. בחינם: עד 2 סניפים ו-5 מוצרים בהשוואה.');
       });
     } else {
@@ -205,7 +227,7 @@
   const qtyStep = (code) => (byWeight(code) ? 0.1 : 1);
   const qtyOf = (code) => Math.min(QTY_MAX, Math.max(qtyStep(code), qty[code] || 1));
   const fmtQ = (q) => String(Math.round(q * 100) / 100); // 1.37 נשאר 1.37, לא מעוגל ל-1.4
-  const saveQty = () => localStorage.setItem('zulik-qty', JSON.stringify(qty));
+  const saveQty = () => { localStorage.setItem('zulik-qty', JSON.stringify(qty)); syncListSoon(); };
   let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
   let noClub = localStorage.getItem('zulik-noclub') === '1'; // הסתרת מבצעים שדורשים מועדון
   const esc = (s) => String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -215,7 +237,16 @@
   try { nameMap = JSON.parse(localStorage.getItem('zulik-names')) || {}; } catch {}
   setInterval(() => localStorage.setItem('zulik-names', JSON.stringify(nameMap)), 4000);
   if (!basket.length) basket = sample.slice(0, LIMITS().basket);
-  const saveBasket = () => localStorage.setItem('zulik-basket', JSON.stringify(basket));
+  // מחובר: כל שינוי בסל נדחף לענן (debounce) - הרשימה מסתנכרנת בין מכשירים
+  let listSyncT = 0;
+  const syncListSoon = () => {
+    if (!me) return;
+    clearTimeout(listSyncT);
+    listSyncT = setTimeout(() => {
+      fetch('/api/list', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: basket.map((c) => ({ c, q: qtyOf(c) })) }) }).catch(() => {});
+    }, 1200);
+  };
+  const saveBasket = () => { localStorage.setItem('zulik-basket', JSON.stringify(basket)); syncListSoon(); };
   const expanded = new Set();
   const indexCache = {};
   const productCache = {};
@@ -1295,11 +1326,160 @@
     if (b) await openProductCard(b.dataset.code);
   });
 
+  // ---------- הרשימה שלי: פאנל צף (למחוברים), סנכרון ענן ושיתוף בוואטסאפ ----------
+  const listWrap = document.createElement('div');
+  listWrap.innerHTML = `
+    <button id="listFab" class="listfab" hidden aria-label="הרשימה שלי">🛒</button>
+    <div id="listPanel" class="listpanel" hidden role="dialog" aria-label="הרשימה שלי">
+      <div class="lphead"><b>🛒 הרשימה שלי</b><small>מסתנכרנת אוטומטית לחשבון שלך</small><button id="lpClose" aria-label="סגירה">✕</button></div>
+      <div id="lpItems" class="lpitems"></div>
+      <div class="lpbtns">
+        <button id="lpWa" class="lpbtn lpwa">שיתוף בוואטסאפ</button>
+        <button id="lpShare" class="lpbtn">📤 שיתוף…</button>
+        <button id="lpCopy" class="lpbtn">🔗 העתקת קישור</button>
+      </div>
+      <p class="lpnote">מי שמקבל את הקישור מתבקש להתחבר או להירשם (חינם) כדי לצפות ברשימה.</p>
+    </div>`;
+  document.body.appendChild(listWrap);
+  const itemName = (c) => (byCode.get(c) || {}).n || nameMap[c] || 'מוצר';
+  function renderListPanel() {
+    $('lpItems').innerHTML = basket.length
+      ? basket.map((c) => `<div class="lpitem"><span>${itemName(c)}</span><b>${fmtQ(qtyOf(c))}${byWeight(c) ? ' ק"ג' : ''}</b></div>`).join('')
+      : '<p class="empty">הסל ריק - הוסיפו מוצרים מהחיפוש.</p>';
+  }
+  function openListPanel() {
+    renderListPanel();
+    $('listPanel').hidden = false;
+  }
+  $('listFab').addEventListener('click', openListPanel);
+  $('lpClose').addEventListener('click', () => { $('listPanel').hidden = true; });
+  let shareCache = null; // {sig, url} - לא יוצרים קישור חדש אם הרשימה לא השתנתה
+  async function shareUrl() {
+    const items = basket.map((c) => ({ c, q: qtyOf(c) }));
+    const sig = JSON.stringify(items);
+    if (shareCache && shareCache.sig === sig) return shareCache.url;
+    const r = await fetch('/api/list/share', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.id) { showToast(j.error === 'empty' ? 'הסל ריק - אין מה לשתף.' : 'השיתוף נכשל - נסו שוב.'); return null; }
+    shareCache = { sig, url: location.origin + '/?l=' + j.id };
+    return shareCache.url;
+  }
+  const shareText = (url) => `🛒 ${me ? me.name : ''} שיתף איתך רשימת קניות בסַלְזוֹל - השוואת מחירים בין הרשתות:\n${url}`;
+  $('lpWa').addEventListener('click', async () => { const u = await shareUrl(); if (u) window.open('https://wa.me/?text=' + encodeURIComponent(shareText(u)), '_blank'); });
+  $('lpShare').addEventListener('click', async () => {
+    const u = await shareUrl();
+    if (!u) return;
+    if (navigator.share) navigator.share({ title: 'רשימת קניות - סַלְזוֹל', text: shareText(u) }).catch(() => {});
+    else { navigator.clipboard.writeText(u); showToast('הקישור הועתק 🔗'); }
+  });
+  $('lpCopy').addEventListener('click', async () => { const u = await shareUrl(); if (u) { await navigator.clipboard.writeText(u); showToast('הקישור הועתק 🔗'); } });
+
+  async function importShared(j) {
+    let added = 0;
+    for (const it of j.items) {
+      if (!basket.includes(it.c)) {
+        if (basket.length >= LIMITS().basket) break;
+        basket.push(it.c);
+        added++;
+      }
+      if (it.q && it.q !== 1) qty[it.c] = it.q;
+    }
+    saveBasket();
+    saveQty();
+    history.replaceState(null, '', location.pathname);
+    showToast(`🛒 הרשימה של <b>${j.from}</b> נטענה (${j.items.length} מוצרים${added < j.items.length ? `, ${added} חדשים` : ''}).`);
+  }
+  async function tryLoadShared(id) {
+    const r = await fetch('/api/shared/' + id);
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401 && j.from) {
+      // אורח: מסך הרשמה עם הקשר - "X שיתף איתך רשימה"
+      window.__pendingShare = id;
+      authModal.hidden = false;
+      authView('register');
+      const note = document.createElement('p');
+      note.className = 'sharednote';
+      note.innerHTML = `🛒 <b>${j.from}</b> שיתף איתך רשימת קניות - הירשמו או התחברו (חינם) כדי לצפות בה`;
+      $('authViews').prepend(note);
+      return false;
+    }
+    if (r.ok && Array.isArray(j.items)) { await importShared(j); return true; }
+    if (r.status === 404) showToast('הקישור פג תוקף או שהרשימה נמחקה.');
+    return false;
+  }
+
+  // ---------- סרגל נגישות (זמין לכולם, נשמר בין ביקורים) ----------
+  const A11Y = [
+    ['font1', 'הגדלת טקסט'], ['font2', 'טקסט גדול מאוד'], ['contrast', 'ניגודיות גבוהה'],
+    ['invert', 'ניגודיות הפוכה'], ['gray', 'גווני אפור'], ['links', 'הדגשת קישורים'],
+    ['readable', 'גופן קריא'], ['cursor', 'סמן גדול'], ['noanim', 'עצירת אנימציות'],
+  ];
+  let a11yOn = [];
+  try { a11yOn = JSON.parse(localStorage.getItem('zulik-a11y')) || []; } catch {}
+  const applyA11y = () => {
+    for (const [k] of A11Y) document.documentElement.classList.toggle('a11y-' + k, a11yOn.includes(k));
+    localStorage.setItem('zulik-a11y', JSON.stringify(a11yOn));
+  };
+  applyA11y();
+  const a11yWrap = document.createElement('div');
+  a11yWrap.innerHTML = `
+    <button id="a11yFab" class="a11yfab" aria-label="תפריט נגישות" title="נגישות">♿</button>
+    <div id="a11yPanel" class="a11ypanel" hidden role="dialog" aria-label="הגדרות נגישות">
+      <div class="lphead"><b>♿ נגישות</b><button id="a11yClose" aria-label="סגירה">✕</button></div>
+      <div class="a11ybtns">${A11Y.map(([k, he]) => `<button class="a11yopt" data-a11y="${k}" aria-pressed="false">${he}</button>`).join('')}</div>
+      <button class="a11yreset" id="a11yReset">איפוס הגדרות נגישות</button>
+      <p class="lpnote"><a href="pages/accessibility.html">הצהרת הנגישות המלאה</a> · נתקלתם בבעיה? contact@salzol.com</p>
+    </div>`;
+  document.body.appendChild(a11yWrap);
+  const syncA11yBtns = () => {
+    a11yWrap.querySelectorAll('.a11yopt').forEach((b) => {
+      const on = a11yOn.includes(b.dataset.a11y);
+      b.classList.toggle('sel', on);
+      b.setAttribute('aria-pressed', on);
+    });
+  };
+  $('a11yFab').addEventListener('click', () => { $('a11yPanel').hidden = !$('a11yPanel').hidden; syncA11yBtns(); });
+  $('a11yClose').addEventListener('click', () => { $('a11yPanel').hidden = true; });
+  a11yWrap.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.a11yopt');
+    if (b) {
+      const k = b.dataset.a11y;
+      a11yOn = a11yOn.includes(k) ? a11yOn.filter((x) => x !== k) : [...a11yOn, k];
+      if (k === 'font1') a11yOn = a11yOn.filter((x) => x !== 'font2' || k === 'font2');
+      if (k === 'font2') a11yOn = a11yOn.filter((x) => x !== 'font1');
+      if (k === 'contrast') a11yOn = a11yOn.filter((x) => x !== 'invert');
+      if (k === 'invert') a11yOn = a11yOn.filter((x) => x !== 'contrast');
+      applyA11y();
+      syncA11yBtns();
+    }
+    if (ev.target.id === 'a11yReset') { a11yOn = []; applyA11y(); syncA11yBtns(); }
+  });
+
   renderAuthUI();
+  $('listFab').hidden = !me;
+  // מחובר: אימוץ רשימת הענן כשאין סל מקומי; אחרת דחיפת המקומי לענן
+  if (me) {
+    try {
+      const j = await fetch('/api/list').then((r) => (r.ok ? r.json() : null));
+      const cloud = j && j.list && Array.isArray(j.list.items) ? j.list.items : [];
+      if (cloud.length && !localStorage.getItem('zulik-basket')) {
+        basket = cloud.map((it) => it.c).slice(0, LIMITS().basket);
+        for (const it of cloud) if (it.q && it.q !== 1) qty[it.c] = it.q;
+        localStorage.setItem('zulik-basket', JSON.stringify(basket));
+        localStorage.setItem('zulik-qty', JSON.stringify(qty));
+      } else if (basket.length) syncListSoon();
+    } catch {}
+  }
   await loadDistrict();
   renderDistrictUI();
   renderSampleChips();
   $('favPanel').hidden = mode !== 'fav';
   if (mode === 'fav') renderFavPanel();
   await render();
+  // קישור רשימה משותפת (?l=<id>) - אחרי שהכל נטען
+  const sharedId = new URLSearchParams(location.search).get('l');
+  if (sharedId) {
+    const ok = await tryLoadShared(sharedId);
+    if (ok) await render();
+  }
 })();
