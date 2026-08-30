@@ -12,6 +12,10 @@ fs.mkdirSync(IMG_DIR, { recursive: true });
 
 const OFF_BATCHES = parseInt(process.env.IMG_OFF_BATCHES || '600', 10); // 50 ברקודים לבאץ'
 const RAMI_PROBES = parseInt(process.env.IMG_RAMI_PROBES || '1200', 10);
+// תקציב זמן קשיח: כשהמאגרים החיצוניים איטיים, 600 באצ'ים כפול timeout מצטברים לשעות
+// והשלב תקע את כל ה-nightly - עוצרים בזמן וכותבים את מה שנאסף; הלילה הבא ימשיך מאותה נקודה
+const DEADLINE = Date.now() + parseInt(process.env.IMG_BUDGET_MIN || '20', 10) * 60000;
+const outOfTime = () => Date.now() > DEADLINE;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function get(url, headers = {}) {
@@ -22,7 +26,7 @@ function get(url, headers = {}) {
       res.on('end', () => resolve({ status: res.statusCode, text: Buffer.concat(chunks).toString('utf8') }));
     });
     req.on('error', reject);
-    req.setTimeout(30000, () => req.destroy(new Error('timeout')));
+    req.setTimeout(15000, () => req.destroy(new Error('timeout')));
   });
 }
 
@@ -55,21 +59,25 @@ console.log(`ברקודים: ${allCodes.length} סה"כ, ${allCodes.length - tod
 
 (async () => {
   // ---------- שלב 1: Open Facts בבאצ'ים של 50 (מזון + מוצרי צריכה + טואלטיקה) ----------
-  let offHits = 0, offDone = 0;
+  let offHits = 0, offDone = 0, offFails = 0;
   const offResolved = new Map(); // code -> url|undefined בשלב הזה
   const batchCodes = todo.slice(0, OFF_BATCHES * 50);
   for (let i = 0; i < batchCodes.length; i += 50) {
+    if (outOfTime()) { console.log('  OFF: נגמר תקציב הזמן - עוברים הלאה'); break; }
+    // מאגר שנופל שוב ושוב = מושבת/חוסם - אין טעם לשרוף עליו את שאר הלילה
+    if (offFails >= 12) { console.log('  OFF: יותר מדי כשלונות רצופים - מדלגים על השלב'); break; }
     const batch = batchCodes.slice(i, i + 50);
     for (const host of ['world.openfoodfacts.org', 'world.openproductsfacts.org', 'world.openbeautyfacts.org']) {
       const pending = batch.filter((c) => !offResolved.has(c));
       if (!pending.length) break;
       try {
         const r = await get(`https://${host}/api/v2/search?code=${pending.join(',')}&fields=code,image_small_url&page_size=50`);
-        if (r.status !== 200) continue;
+        if (r.status !== 200) { offFails++; continue; }
+        offFails = 0;
         for (const p of (JSON.parse(r.text).products || [])) {
           if (p.image_small_url) { offResolved.set(p.code, p.image_small_url); offHits++; }
         }
-      } catch {}
+      } catch { offFails++; }
       await sleep(350);
     }
     for (const c of batch) if (offResolved.has(c)) setImg(c, offResolved.get(c));
@@ -82,6 +90,7 @@ console.log(`ברקודים: ${allCodes.length} סה"כ, ${allCodes.length - tod
   let ramiHits = 0, ramiMiss = 0, backoffs = 0;
   const probeList = batchCodes.filter((c) => !offResolved.has(c)).slice(0, RAMI_PROBES);
   for (const code of probeList) {
+    if (outOfTime()) { console.log('  רמי לוי: נגמר תקציב הזמן - עוצרים'); break; }
     try {
       const r = await get(`https://img.rami-levy.co.il/product/${code}/small.jpg`, { 'User-Agent': 'Mozilla/5.0' });
       if (r.status === 200) { setImg(code, 'r'); ramiHits++; }

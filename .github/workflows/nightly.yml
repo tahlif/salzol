@@ -15,6 +15,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 150   # ריצה רגילה ~40 דקות; בלם בטיחות שלא תיתקע שעות
     steps:
       - uses: actions/checkout@v4
 
@@ -42,16 +43,25 @@ jobs:
       - name: בנייה ועדכון שינויים
         run: node pipeline/build.js
 
+      # שלבי העשרה (תמונות/פייסבוק) לעולם לא חוסמים את עדכון המחירים עצמו:
+      # timeout קשיח + continue-on-error - ב-30.08 שלב התמונות נתקע מול OFF איטי
+      # ושתי ריצות לילה שלמות נתקעו לפני הקומיט
       - name: מפת תמונות מצטברת (Open Facts + רמי לוי, נתח לילי)
+        timeout-minutes: 25
+        continue-on-error: true
         run: node pipeline/images.js
 
       - name: פוסט יומי אוטומטי לפייסבוק
+        timeout-minutes: 10
+        continue-on-error: true
         env:
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
         run: node pipeline/social-post.js
 
       - name: מענה אוטומטי לתגובות בעמוד
+        timeout-minutes: 10
+        continue-on-error: true
         env:
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
