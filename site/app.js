@@ -1576,6 +1576,17 @@
   $('lpClose').addEventListener('click', () => { $('listPanel').hidden = true; clearInterval(sharedPollT); });
   $('lpTabMine').addEventListener('click', () => setLpTab('mine'));
   $('lpTabShared').addEventListener('click', () => setLpTab('shared'));
+  // לחיצה מחוץ לחלונית סוגרת אותה (וגם את סרגל הנגישות)
+  document.addEventListener('click', (ev) => {
+    // אלמנט שהוחלף ברינדור תוך כדי הקליק (למשל +/- ברשימה) = קליק פנימי, לא סוגרים
+    if (!document.contains(ev.target)) return;
+    if (!$('listPanel').hidden && !ev.target.closest('#listPanel') && !ev.target.closest('#listFab') && !ev.target.closest('#authBox')) {
+      $('listPanel').hidden = true;
+      clearInterval(sharedPollT);
+    }
+    const ap = $('a11yPanel');
+    if (ap && !ap.hidden && !ev.target.closest('#a11yPanel') && !ev.target.closest('#a11yFab')) ap.hidden = true;
+  });
 
   async function tryLoadShared(id) {
     const r = await fetch('/api/shared/' + id);
