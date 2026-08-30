@@ -7,7 +7,8 @@
 <title>סלזול — פאנל ניהול</title>
 <meta name="robots" content="noindex">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?b=59">
+<link rel="stylesheet" href="style.css?b=62">
+<script src="chrome.js?b=62" defer></script>
 <style>
   .admtable { width: 100%; border-collapse: collapse; font-size: 14px; }
   .admtable th, .admtable td { padding: 8px 10px; text-align: right; border-bottom: 0.5px solid var(--border); }
@@ -20,8 +21,11 @@
 <body>
 <header class="siteheader">
   <div class="wrap headrow">
-    <h1 class="logo">סַלְזוֹל<span>.</span></h1>
-    <a class="linkbtn" href="./">← חזרה לאתר</a>
+    <a href="./" style="text-decoration:none;color:inherit"><h1 class="logo">סַלְזוֹל<span>.</span></h1></a>
+    <div class="headleft">
+      <span class="badge" id="updatedBadge">טוען…</span>
+      <div id="authBox"></div>
+    </div>
   </div>
 </header>
 <div class="wrap">

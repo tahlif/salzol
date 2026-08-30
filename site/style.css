@@ -243,24 +243,17 @@ footer a { color: var(--text-2); }
   #realmap { height: 280px; }
   .legend .lnote { margin-inline-start: 0; width: 100%; }
   .branches { grid-template-columns: 1fr; }
-  /* גם במובייל: טבלה אמיתית עם גלילה אופקית, עמודת המוצר נעוצה מימין */
-  .thead, .row, .totals { grid-template-columns: minmax(132px, 40vw) var(--pcols, repeat(3, 64px)); }
+  /* גם במובייל: טבלה אמיתית עם גלילה אופקית, עמודת המוצר נעוצה מימין.
+     הכלים (כמות + ✕) באותה שורה של המוצר, בעמודה האחרונה משמאל - כמו במחשב */
+  .thead, .row, .totals { grid-template-columns: minmax(132px, 40vw) var(--pcols, repeat(3, 64px)) 96px; }
   .row .pname { font-size: 13px; }
   .row .ptxt { white-space: normal; line-height: 1.3; max-height: 2.6em; overflow: hidden; }
-  /* בורר הכמות (−/+) וה-✕ בשורה שנייה מתחת לשם המוצר - בעמודה צרה בקצה הם כיסו
-     את עמודת הסניף האחרונה משמאל וטאפ שם שינה כמות במקום לפתוח את המוצר */
-  .row .rowtools {
-    /* פרוס על כל רוחב השורה וצמוד לקצה השמאלי של המסך - כמו במחשב.
-       sticky עובד כאן כי אזור-הגריד המלא רחב בהרבה מהתוכן (יש לו לאן "להידבק") */
-    grid-row: 2; grid-column: 1 / -1;
-    justify-self: end;
-    position: sticky; left: 8px; z-index: 2;
-    justify-content: flex-start;
-    background: var(--surface);
-  }
-  .row .rowtools .rmv { margin-top: 0; }
-  /* מתחת ל-16px מובייל (iOS) מזנק זום בפוקוס על שדה קלט */
-  .qinp { font-size: 16px; width: 42px; }
+  /* סטפר קומפקטי שנכנס ב-84px בלי לגלוש על עמודת המחיר שלידו */
+  .qinp { font-size: 16px; width: 26px; } /* מתחת ל-16px מובייל (iOS) מזנק זום בפוקוס */
+  .qtybox { padding: 1px 2px; gap: 1px; }
+  .qbtn { padding: 3px 1px; font-size: 12px; }
+  .rowtools { gap: 2px; }
+  .rowtools .rmv { font-size: 14px; padding: 3px 2px; }
 }
 
 @media (prefers-color-scheme: dark) {

@@ -188,6 +188,12 @@
   // כניסה מקישור איפוס סיסמה (?reset=<token>)
   const resetTok = new URLSearchParams(location.search).get('reset');
   if (resetTok) { authModal.hidden = false; authView('newpass', resetTok); }
+  // כפתור "התחברות" בדפי המשנה מפנה לכאן עם ?login=1 - פותחים את המודל
+  if (!me && new URLSearchParams(location.search).get('login')) {
+    history.replaceState(null, '', location.pathname);
+    authModal.hidden = false;
+    authView('login');
+  }
 
   const [meta, chainsAll, sample, storesAll, cbsCities] = await Promise.all([
     fetch('data/meta.json').then((r) => r.json()),
