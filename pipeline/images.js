@@ -58,37 +58,12 @@ const todo = allCodes.filter((c) => !known(c));
 console.log(`ברקודים: ${allCodes.length} סה"כ, ${allCodes.length - todo.length} כבר במפה, ${todo.length} ממתינים`);
 
 (async () => {
-  // ---------- שלב 1: Open Facts בבאצ'ים של 50 (מזון + מוצרי צריכה + טואלטיקה) ----------
-  let offHits = 0, offDone = 0, offFails = 0;
-  const offResolved = new Map(); // code -> url|undefined בשלב הזה
-  const batchCodes = todo.slice(0, OFF_BATCHES * 50);
-  for (let i = 0; i < batchCodes.length; i += 50) {
-    if (outOfTime()) { console.log('  OFF: נגמר תקציב הזמן - עוברים הלאה'); break; }
-    // מאגר שנופל שוב ושוב = מושבת/חוסם - אין טעם לשרוף עליו את שאר הלילה
-    if (offFails >= 12) { console.log('  OFF: יותר מדי כשלונות רצופים - מדלגים על השלב'); break; }
-    const batch = batchCodes.slice(i, i + 50);
-    for (const host of ['world.openfoodfacts.org', 'world.openproductsfacts.org', 'world.openbeautyfacts.org']) {
-      const pending = batch.filter((c) => !offResolved.has(c));
-      if (!pending.length) break;
-      try {
-        const r = await get(`https://${host}/api/v2/search?code=${pending.join(',')}&fields=code,image_small_url&page_size=50`);
-        if (r.status !== 200) { offFails++; continue; }
-        offFails = 0;
-        for (const p of (JSON.parse(r.text).products || [])) {
-          if (p.image_small_url) { offResolved.set(p.code, p.image_small_url); offHits++; }
-        }
-      } catch { offFails++; }
-      await sleep(350);
-    }
-    for (const c of batch) if (offResolved.has(c)) setImg(c, offResolved.get(c));
-    offDone += batch.length;
-    if ((i / 50) % 50 === 0) console.log(`  OFF: ${offDone}/${batchCodes.length} נבדקו, ${offHits} תמונות`);
-  }
-  console.log(`OFF: ${offHits} תמונות מתוך ${offDone} ברקודים`);
-
-  // ---------- שלב 2: גישוש CDN רמי לוי למי שעדיין בלי (מדורג, עמיד ל-429) ----------
+  // ---------- שלב 1: גישוש CDN רמי לוי (המקור העיקרי, ~70% פגיעה) על ראש התור ----------
+  // הסדר הפוך מבעבר בכוונה: OF-קודם שרף את כל תקציב הזמן על מאגר איטי עם ~1% פגיעה
+  // וריצה שלמה קידמה בקושי עשרות מוצרים. רמי-קודם מקדם ~2,500 מוצרים בריצה.
   let ramiHits = 0, ramiMiss = 0, backoffs = 0;
-  const probeList = batchCodes.filter((c) => !offResolved.has(c)).slice(0, RAMI_PROBES);
+  const ramiMisses = []; // מועמדים ל-Open Facts (סומנו 0 בינתיים; OFF משדרג אם ימצא)
+  const probeList = todo.slice(0, RAMI_PROBES);
   for (const code of probeList) {
     if (outOfTime()) { console.log('  רמי לוי: נגמר תקציב הזמן - עוצרים'); break; }
     try {
@@ -98,12 +73,39 @@ console.log(`ברקודים: ${allCodes.length} סה"כ, ${allCodes.length - tod
         backoffs++;
         if (backoffs > 5) { console.log('  רמי לוי: יותר מדי 429 - עוצרים את השלב'); break; }
         await sleep(20000);
-        continue; // לא מסמנים כלום - ננסה שוב בלילה הבא
-      } else { setImg(code, 0); ramiMiss++; }
+        continue; // לא מסמנים כלום - ננסה שוב בריצה הבאה
+      } else { setImg(code, 0); ramiMisses.push(code); ramiMiss++; }
     } catch { /* שגיאת רשת - לא מסמנים */ }
     await sleep(300);
   }
   console.log(`רמי לוי: ${ramiHits} תמונות, ${ramiMiss} אין, ${backoffs} האטות`);
+
+  // ---------- שלב 2: Open Facts רק למי שרמי לוי לא מצא (משדרג 0 → URL) ----------
+  let offHits = 0, offDone = 0, offFails = 0;
+  const batchCodes = ramiMisses.slice(0, OFF_BATCHES * 50);
+  for (let i = 0; i < batchCodes.length; i += 50) {
+    if (outOfTime()) { console.log('  OFF: נגמר תקציב הזמן - עוצרים'); break; }
+    // מאגר שנופל שוב ושוב = מושבת/חוסם - אין טעם לשרוף עליו את שאר הריצה
+    if (offFails >= 12) { console.log('  OFF: יותר מדי כשלונות רצופים - מדלגים על השלב'); break; }
+    const batch = batchCodes.slice(i, i + 50);
+    const found = new Set();
+    for (const host of ['world.openfoodfacts.org', 'world.openproductsfacts.org', 'world.openbeautyfacts.org']) {
+      const pending = batch.filter((c) => !found.has(c));
+      if (!pending.length) break;
+      try {
+        const r = await get(`https://${host}/api/v2/search?code=${pending.join(',')}&fields=code,image_small_url&page_size=50`);
+        if (r.status !== 200) { offFails++; continue; }
+        offFails = 0;
+        for (const p of (JSON.parse(r.text).products || [])) {
+          if (p.image_small_url) { setImg(p.code, p.image_small_url); found.add(p.code); offHits++; }
+        }
+      } catch { offFails++; }
+      await sleep(350);
+    }
+    offDone += batch.length;
+    if ((i / 50) % 10 === 0) console.log(`  OFF: ${offDone}/${batchCodes.length} נבדקו, ${offHits} תמונות`);
+  }
+  console.log(`OFF: ${offHits} תמונות מתוך ${offDone} החמצות-רמי שנבדקו`);
 
   // ---------- כתיבה ----------
   let total = 0, misses = 0;
