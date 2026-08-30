@@ -6,3 +6,5 @@
   Cache-Control: no-cache, must-revalidate
 /admin.html
   Cache-Control: no-cache, must-revalidate
+/pages/*
+  Cache-Control: no-cache, must-revalidate
