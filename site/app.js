@@ -193,10 +193,17 @@
   try { favs = JSON.parse(localStorage.getItem('zulik-favs2')) || []; } catch {}
   let basket = [];
   try { basket = JSON.parse(localStorage.getItem('zulik-basket')) || []; } catch {}
-  // כמות לכל מוצר בסל (1-10) - הסה"כ מוכפל בכמות
+  // כמות לכל מוצר בסל - מוצרי יחידה: 1-10; מוצרים שקילים: משקל בק"ג בקפיצות חצי ק"ג
   let qty = {};
   try { qty = JSON.parse(localStorage.getItem('zulik-qty')) || {}; } catch {}
-  const qtyOf = (code) => Math.min(10, Math.max(1, qty[code] || 1));
+  // מוצר שקיל = נמכר לפי ק"ג (שכבת התוצרת v-* או קוד פנימי קצר של רשת, לא ברקוד אמיתי)
+  const byWeight = (code) => {
+    const u = (byCode.get(code) || {}).u;
+    return !!u && u[1] === 'g' && u[0] >= 500 && !/^\d{8,13}$/.test(code);
+  };
+  const qtyStep = (code) => (byWeight(code) ? 0.5 : 1);
+  const qtyOf = (code) => Math.min(10, Math.max(qtyStep(code), qty[code] || 1));
+  const fmtQ = (q) => (q % 1 ? q.toFixed(1) : String(q));
   const saveQty = () => localStorage.setItem('zulik-qty', JSON.stringify(qty));
   let sortByUnit = false; // מיון תצוגה לפי מחיר-ליחידה (לא משנה את סדר הסל השמור)
   let noClub = localStorage.getItem('zulik-noclub') === '1'; // הסתרת מבצעים שדורשים מועדון
@@ -498,7 +505,9 @@
   });
 
   // ---------- חיפוש ----------
-  const norm = (s) => s.toLowerCase().replace(/["'`׳״]/g, '').replace(/\s+/g, ' ').trim();
+  // אותיות סופיות מנורמלות: "מלפפון" (ן סופית) חייב למצוא את "מלפפונים" (נ רגילה)
+  const FINALS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+  const norm = (s) => s.toLowerCase().replace(/["'`׳״]/g, '').replace(/[ךםןףץ]/g, (c) => FINALS[c]).replace(/\s+/g, ' ').trim();
   const searchEl = $('search');
   const sugEl = $('suggest');
   let active = -1;
@@ -508,6 +517,7 @@
     sugEl.innerHTML = matches.map((e, i) => {
       const mcFlag = flagImg(e.mc || (e.il ? 'IL' : ''));
       const meta = [
+        e.p != null ? `<b class="sgprice">מ-${fmt(e.p)}</b>` : '',
         e.pm ? '<span class="sgpromo">🏷 במבצע</span>' : '',
         e.dn ? '<span class="chgdown">▼ הוזל</span>' : '',
         e.b, fmtPkg(e.u),
@@ -551,11 +561,22 @@
     const favChains = new Set(favs.map((k) => (branchByKey.get(k) || {}).chain).filter(Boolean));
     const favCount = (e) => (favChains.size ? e.ch.filter((c) => favChains.has(c)).length : 0);
     const allFav = (e) => favChains.size > 0 && [...favChains].every((c) => e.ch.includes(c));
+    // רלוונטיות: שם זהה לשאילתה קודם; רשומות התוצרת שלנו (v-*) באותה דרגה גם על
+    // צורת יחיד/רבים ("בננה"→"בננות (ק\"ג)"); אחריהן שם שמתחיל בשאילתה - כדי
+    // ש"בננה" יחזיר בננה אמיתית ולא מיץ תות-בננה שנמכר ב-15 רשתות
+    const rel = (e) => {
+      if (!toks.length) return 3;
+      const n = norm(e.n);
+      if (n === q) return 0;
+      if (e.c.startsWith('v-') && n.startsWith(q.slice(0, Math.max(3, q.length - 1)))) return 0;
+      if (n.startsWith(q)) return 1;
+      return 3;
+    };
     // חיפוש גם לפי מותג (יצרן); מוצרים שלא נמכרו 120+ יום יורדים לסוף
     matches = index
       .filter(passFilters)
-      .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t)); })
-      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (allFav(b) - allFav(a)) || (favCount(b) - favCount(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
+      .filter((e) => { if (!toks.length) return true; const n = norm(e.n + ' ' + (e.b || '')); return toks.every((t) => n.includes(t) || (e.c.startsWith('v-') && t.length >= 3 && n.includes(t.slice(0, -1)))); })
+      .sort((a, b) => ((a.z || 0) - (b.z || 0)) || (rel(a) - rel(b)) || (allFav(b) - allFav(a)) || (favCount(b) - favCount(a)) || (b.ch.length - a.ch.length) || (a.n.length - b.n.length))
       .slice(0, 12)
       .map((e) => ({ ...e, favIn: favChains.size ? e.ch.filter((c) => favChains.has(c)) : [], favAll: allFav(e) }));
     renderSuggest();
@@ -578,9 +599,9 @@
   });
   async function add(code) {
     searchEl.value = ''; matches = []; renderSuggest();
-    // בחירה חוזרת של מוצר שכבר בסל = עוד יחידה (עד 10) - כל המחירים והסה"כ מתעדכנים
+    // בחירה חוזרת של מוצר שכבר בסל = עוד יחידה/חצי ק"ג (עד 10) - כל המחירים והסה"כ מתעדכנים
     if (basket.includes(code)) {
-      qty[code] = Math.min(10, qtyOf(code) + 1);
+      qty[code] = Math.round(Math.min(10, qtyOf(code) + qtyStep(code)) * 2) / 2;
       saveQty();
       await render();
       return;
@@ -875,13 +896,28 @@
       const have = prices.filter((p) => p !== null);
       const full = have.length === cols.length;
       const q = qtyOf(code);
-      if (full) { comparable++; prices.forEach((p, i) => { totals[i] += p * q; }); }
+      // מחיר אפקטיבי לעמודה: כשהכמות מזכה במבצע (q>=MinQty) היחידות שנכנסות בו במחיר
+      // מבצע והשאר במחיר מדף - מה שהקונה משלם בפועל; זה מה שנספר גם בשורת הסה"כ
+      const effs = cols.map((c, i) => {
+        const p = prices[i];
+        if (p === null) return null;
+        const pr = colRecs[i] && colRecs[i].prices[c.chain] && colRecs[i].prices[c.chain].pr;
+        if (!pr || (noClub && pr.c) || !(pr.p < p)) return p * q;
+        const m = Math.max(1, pr.m || 1);
+        if (q < m) return p * q;
+        const inPromo = Math.floor(q / m) * m;
+        return inPromo * pr.p + (q - inPromo) * p;
+      });
+      if (full) { comparable++; effs.forEach((t, i) => { totals[i] += t; }); }
+      const bestEff = Math.min(...effs.filter((t) => t !== null));
       const best = Math.min(...have);
       const bestUp = unitPrice(best, anyRec.u);
       const cells = cols.map((c, i) => {
         const p = prices[i];
         if (p === null) return `<div class="price missing" data-chain="${c.label}">—</div>`;
-        const isBest = p === best && have.length > 1;
+        const eff = effs[i];
+        const promoApplied = eff < p * q - 0.005;
+        const isBest = eff === bestEff && have.length > 1;
         const h = colRecs[i] && colRecs[i].history[c.chain];
         const chg = h && h.length >= 2 ? (h[h.length - 1][1] > h[h.length - 2][1] ? 'cup' : 'cdown') : null;
         const chgDate = chg ? h[h.length - 1][0] : null;
@@ -890,10 +926,12 @@
         const up = unitPrice(p, colRecs[i] && colRecs[i].u);
         const uline = up ? `<small class="unitp"><bdi>${fmtUShort(up)}</bdi></small>` : '';
         const pr = colRecs[i] && colRecs[i].prices[c.chain] && colRecs[i].prices[c.chain].pr;
-        // כמות>1: המחיר המוצג ומחיר המבצע מוכפלים בכמות (מחיר-ליחידה נשאר ל-100ג' - מדד השוואה)
-        const prLine = pr && !(noClub && pr.c) ? `<small class="promop" data-tip="${promoTip(pr)}">🏷 ${fmt(pr.p * q)}${pr.c ? '🎫' : ''}</small>` : '';
+        // מבצע שחל (הכמות מספיקה): המחיר הראשי הוא המבצע והשורה הקטנה מראה כמה נחסך;
+        // מבצע שעוד לא חל: המחיר הראשי מדף והשורה הקטנה מציגה את מחיר המבצע (טולטיפ עם התנאים)
+        const prLine = pr && !(noClub && pr.c)
+          ? `<small class="promop" data-tip="${promoTip(pr)}">🏷 ${promoApplied ? `במקום ${fmt(p * q)}` : fmt(pr.p * q)}${pr.c ? '🎫' : ''}</small>` : '';
         // כל תא באותו מבנה בדיוק (pval תמיד) - גבהים אחידים, והתג הכחול לא גולש על השורות שמתחת
-        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}"><span class="pval">${fmt(p * q)}${arrow}</span>${prLine}${uline}</div>`;
+        return `<div class="price ${isBest ? 'best' : ''}" data-chain="${c.label}"><span class="pval${promoApplied ? ' pvpromo' : ''}">${fmt(eff)}${arrow}</span>${prLine}${uline}</div>`;
       }).join('');
       const pkg = fmtPkg(anyRec.u);
       rows.push({
@@ -901,7 +939,7 @@
         html: `<div class="rowwrap"><div class="row" data-code="${code}">
         <div class="pname"><span class="thumb" data-code="${code}"></span><span class="ptxt">${anyRec.name}</span>${pkg ? `<span class="pkg">${pkg}</span>` : ''}${flagHtml(anyRec.mc)}${full ? '' : '<span class="staremark" data-tip="לא נמכר בכל הרשתות שבהשוואה - לכן לא נכלל בשורת הסה־כ">*</span>'}</div>
         <div class="prices-m">${cells}</div>
-        <span class="rowtools"><span class="qtybox" data-tip="כמות בסל (עד 10) - הסה&quot;כ מוכפל"><button class="qbtn" data-qdown="${code}">−</button><b class="${q > 1 ? 'qon' : ''}">${q}</b><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
+        <span class="rowtools"><span class="qtybox" data-tip="${byWeight(code) ? 'משקל בק&quot;ג (חצאי ק&quot;ג, עד 10) - הסה&quot;כ לפי מחיר לק&quot;ג' : 'כמות בסל (עד 10) - הסה&quot;כ מוכפל'}"><button class="qbtn" data-qdown="${code}">−</button><b class="${q !== 1 ? 'qon' : ''}">${fmtQ(q)}</b><button class="qbtn" data-qup="${code}">+</button></span><button class="rmv" data-rm="${code}" aria-label="הסרה">✕</button></span>
       </div></div>` });
     });
 
@@ -923,7 +961,7 @@
       metricsEl.innerHTML = `
         <div class="metric"><p class="k">${useFav() ? 'הסניף הזול מביניהם' : 'הסל הזול ב' + dMeta().he}</p><p class="v">${bestCol.label}</p></div>
         <div class="metric"><p class="k">חיסכון מול היקר</p><p class="v">${fmt(worstT - bestT)} <small>${pct}%-</small></p></div>
-        <div class="metric"><p class="k">מוצרים בסל</p><p class="v">${basket.length}${(() => { const u = basket.reduce((n, c) => n + qtyOf(c), 0); return u > basket.length ? ` <small>· ${u} יח'</small>` : ''; })()}</p></div>`;
+        <div class="metric"><p class="k">מוצרים בסל</p><p class="v">${basket.length}${(() => { const u = basket.reduce((n, c) => n + qtyOf(c), 0); return u > basket.length ? ` <small>· ${fmtQ(u)} יח'</small>` : ''; })()}</p></div>`;
       metricsEl.hidden = false;
     } else {
       totalsEl.hidden = true;
@@ -1149,7 +1187,8 @@
     const qdown = ev.target.closest('[data-qdown]');
     if (qup || qdown) {
       const code = qup ? qup.dataset.qup : qdown.dataset.qdown;
-      qty[code] = Math.min(10, Math.max(1, qtyOf(code) + (qup ? 1 : -1)));
+      const st = qtyStep(code);
+      qty[code] = Math.round(Math.min(10, Math.max(st, qtyOf(code) + (qup ? st : -st))) * 2) / 2;
       saveQty();
       await render();
       return;

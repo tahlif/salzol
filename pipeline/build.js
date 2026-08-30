@@ -441,8 +441,9 @@ for (const d of DISTRICTS) {
       const last = h[h.length - 1];
       if (!last || last[1] !== price) { h.push([stamp, price]); if (last) { changed++; changedKeys.add(id + ':' + key); } }
     }
+    rec.mc = 'IL'; // תוצרת טרייה = כחול-לבן; בלי זה פילטר 🇮🇱 מסתיר את כל הירקות
     shard[key] = rec;
-    index.push({ c: key, n: pr.label, ch: Object.keys(pr.prices), v: 1, u: rec.u });
+    index.push({ c: key, n: pr.label, ch: Object.keys(pr.prices), v: 1, u: rec.u, mc: 'IL', il: 1 });
   }
 
   // איחוד כפילויות: אותו שם בדיוק = רשומה אחת - אבל ממזגים, לא זורקים:
@@ -479,6 +480,13 @@ for (const d of DISTRICTS) {
       if (!kept.b && keptRec.mf) kept.b = keptRec.mf;
     }
     deduped.push(kept);
+  }
+  // המחיר הזול במחוז לכל מוצר - מוצג ליד כל הצעה בחיפוש
+  for (const e of deduped) {
+    const rec = loadShard(shardOf(e.c))[e.c];
+    if (!rec) continue;
+    const ps = Object.values(rec.prices).map((x) => x.p).filter((v) => typeof v === 'number');
+    if (ps.length) e.p = Math.round(Math.min(...ps) * 100) / 100;
   }
   for (const [sh, obj] of shards) fs.writeFileSync(path.join(SDIR, sh + '.json'), JSON.stringify(obj));
   fs.writeFileSync(path.join(DATA, 'd', d.id, 'index.json'), JSON.stringify(deduped));
