@@ -1659,17 +1659,45 @@
     const j = await fetch('/api/list').then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const cloud = j && j.list;
     if (!cloud || !Array.isArray(cloud.items)) return false;
+    const cloudFavs = (Array.isArray(cloud.favs) ? cloud.favs : []).filter((k) => branchByKey.has(k));
+    // מועדפים הם העדפה, לא סשן: בפעם הראשונה שמכשיר פוגש את הענן - איחוד של
+    // שני הצדדים (שלא ייעלם סניף שנבחר במכשיר אחר); אחרי האיחוד - הענן קובע,
+    // כדי שגם הסרת מועדף תתפשט בין המכשירים
+    const favsMerged = localStorage.getItem('zulik-favs-merged') === '1';
+    const unionFavs = () => {
+      const u = [...cloudFavs];
+      for (const k of favs) if (!u.includes(k) && branchByKey.has(k)) u.push(k);
+      return u.slice(0, LIMITS().favs);
+    };
     const cloudTs = cloud.updated ? new Date(cloud.updated).getTime() : 0;
-    if (cloudTs <= listLocalTs) return false;
+    if (cloudTs <= listLocalTs) {
+      // המקומי חדש יותר - אבל איחוד מועדפים חד-פעמי עדיין נדרש
+      if (!favsMerged && cloudFavs.length) {
+        const u = unionFavs();
+        if (JSON.stringify(u) !== JSON.stringify(favs)) {
+          favs = u;
+          localStorage.setItem('zulik-favs2', JSON.stringify(favs));
+          localStorage.setItem('zulik-favs-merged', '1');
+          syncListSoon();
+          return true; // התצוגה צריכה רענון - נוסף סניף קבוע
+        }
+      }
+      localStorage.setItem('zulik-favs-merged', '1');
+      return false;
+    }
     basket = cloud.items.map((it) => it.c).slice(0, LIMITS().basket);
     qty = {};
     for (const it of cloud.items) if (it.q && it.q !== 1) qty[it.c] = it.q;
-    if (Array.isArray(cloud.favs)) favs = cloud.favs.filter((k) => branchByKey.has(k)).slice(0, LIMITS().favs);
+    const newFavs = favsMerged ? cloudFavs.slice(0, LIMITS().favs) : unionFavs();
+    const favsGrew = newFavs.length > cloudFavs.length;
+    favs = newFavs;
     localStorage.setItem('zulik-basket', JSON.stringify(basket));
     localStorage.setItem('zulik-qty', JSON.stringify(qty));
     localStorage.setItem('zulik-favs2', JSON.stringify(favs));
+    localStorage.setItem('zulik-favs-merged', '1');
     listLocalTs = cloudTs;
     localStorage.setItem('zulik-list-ts', listLocalTs);
+    if (favsGrew) syncListSoon(); // האיחוד חוזר לענן - כל המכשירים מקבלים את כולם
     return true;
   }
   if (me) {
