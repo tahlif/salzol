@@ -68,6 +68,10 @@ jobs:
       - name: מפת תמונות מצטברת (Open Facts + רמי לוי, נתח לילי)
         timeout-minutes: 25
         continue-on-error: true
+        env:
+          # כל ריצת ענן מקבלת IP טרי - מנצלים את מלוא תקציב 20 הדקות לגישוש רמי לוי;
+          # ה-CDN חוסם IP בודד שמנסה לרוץ מהר (נוסה מקומית - 429 גם בקצב עדין)
+          IMG_RAMI_PROBES: '2600'
         run: node pipeline/images.js
 
       - name: פוסט יומי אוטומטי לפייסבוק
