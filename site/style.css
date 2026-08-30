@@ -250,9 +250,13 @@ footer a { color: var(--text-2); }
   /* בורר הכמות (−/+) וה-✕ בשורה שנייה מתחת לשם המוצר - בעמודה צרה בקצה הם כיסו
      את עמודת הסניף האחרונה משמאל וטאפ שם שינה כמות במקום לפתוח את המוצר */
   .row .rowtools {
-    grid-row: 2; grid-column: 1; justify-content: flex-end; /* בצד שמאל, כמו במחשב */
-    position: sticky; right: 0; z-index: 2;
-    background: var(--surface); box-shadow: -8px 0 0 var(--surface);
+    /* פרוס על כל רוחב השורה וצמוד לקצה השמאלי של המסך - כמו במחשב.
+       sticky עובד כאן כי אזור-הגריד המלא רחב בהרבה מהתוכן (יש לו לאן "להידבק") */
+    grid-row: 2; grid-column: 1 / -1;
+    justify-self: end;
+    position: sticky; left: 8px; z-index: 2;
+    justify-content: flex-start;
+    background: var(--surface);
   }
   .row .rowtools .rmv { margin-top: 0; }
   /* מתחת ל-16px מובייל (iOS) מזנק זום בפוקוס על שדה קלט */
