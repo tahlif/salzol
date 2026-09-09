@@ -614,43 +614,7 @@
       "district": "telaviv"
     }
   },
-  "shefabirkathashem": {
-    "center": {
-      "store": "038",
-      "name": "שמאי אלעד",
-      "city": "",
-      "address": "שמאי 1",
-      "district": "center"
-    },
-    "telaviv": {
-      "store": "023",
-      "name": "כהנמן בני ברק",
-      "city": "",
-      "address": "כהנמן 107",
-      "district": "telaviv"
-    },
-    "jerusalem": {
-      "store": "022",
-      "name": "בן איש חי בית שמש",
-      "city": "",
-      "address": "בן איש חי 39",
-      "district": "jerusalem"
-    },
-    "south": {
-      "store": "042",
-      "name": "אופקים",
-      "city": "",
-      "address": "ז'בוטינסקי 66",
-      "district": "south"
-    },
-    "yosh": {
-      "store": "039",
-      "name": "מודיעין עילית",
-      "city": "",
-      "address": "ר' עקיבא 5",
-      "district": "yosh"
-    }
-  },
+  "shefabirkathashem": {},
   "shukhayir": {
     "north": {
       "store": "004",
