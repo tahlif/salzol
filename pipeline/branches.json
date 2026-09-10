@@ -595,21 +595,21 @@
     "north": {
       "store": "014",
       "name": "ת\"א סלמה",
-      "city": "unknown",
+      "city": "",
       "address": "unknown",
       "district": "north"
     },
     "center": {
       "store": "007",
       "name": "ראשון לציון בקר",
-      "city": "ראשון לציון",
+      "city": "",
       "address": "משה בקר 17",
       "district": "center"
     },
     "telaviv": {
       "store": "006",
       "name": "תל אביב",
-      "city": "תל אביב - יפו",
+      "city": "",
       "address": "שלבים 26",
       "district": "telaviv"
     }
