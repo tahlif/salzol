@@ -496,45 +496,38 @@
   },
   "kingstore": {
     "north": {
-      "store": "3378",
-      "name": "וולט כרמיאל",
+      "store": "015",
+      "name": "כרמיאל",
       "city": "",
-      "address": "",
+      "address": "היוצרים 15",
       "district": "north"
     },
     "haifa": {
-      "store": "3360",
-      "name": "וולט חיפה",
+      "store": "014",
+      "name": "כבאביר חיפה",
       "city": "",
-      "address": "",
+      "address": "הלבונה 7 0",
       "district": "haifa"
     },
     "center": {
-      "store": "3376",
-      "name": "וולט רמלה",
+      "store": "019",
+      "name": "רמלה",
       "city": "",
-      "address": "",
+      "address": "שדרות הרצל, קריית הממשלה 91",
       "district": "center"
     },
     "telaviv": {
-      "store": "3379",
-      "name": "וולט יפת -יפו תל אביב",
+      "store": "018",
+      "name": "יפת-יפו תל אביב יום ביום",
       "city": "",
-      "address": "יפת",
+      "address": "יפת 65 65",
       "district": "telaviv"
     },
-    "jerusalem": {
-      "store": "3386",
-      "name": "וולט ירושלים",
-      "city": "",
-      "address": "",
-      "district": "jerusalem"
-    },
     "south": {
-      "store": "3380",
-      "name": "וולט באר שבע",
+      "store": "008",
+      "name": "באר שבע",
       "city": "",
-      "address": "",
+      "address": "קישון  32,מרכז מסחרי חוצות להב 0",
       "district": "south"
     }
   },
