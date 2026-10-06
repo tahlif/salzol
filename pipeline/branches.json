@@ -499,42 +499,42 @@
       "store": "3378",
       "name": "וולט כרמיאל",
       "city": "",
-      "address": "",
+      "address": "unknown",
       "district": "north"
     },
     "haifa": {
       "store": "3360",
       "name": "וולט חיפה",
       "city": "",
-      "address": "",
+      "address": "unknown",
       "district": "haifa"
     },
     "center": {
       "store": "3376",
       "name": "וולט רמלה",
       "city": "",
-      "address": "",
+      "address": "unknown",
       "district": "center"
     },
     "telaviv": {
       "store": "3379",
       "name": "וולט יפת -יפו תל אביב",
       "city": "",
-      "address": "יפת",
+      "address": "יפת 0",
       "district": "telaviv"
     },
     "jerusalem": {
       "store": "3386",
       "name": "וולט ירושלים",
       "city": "",
-      "address": "",
+      "address": "unknown",
       "district": "jerusalem"
     },
     "south": {
       "store": "3380",
       "name": "וולט באר שבע",
       "city": "",
-      "address": "",
+      "address": "unknown",
       "district": "south"
     }
   },
