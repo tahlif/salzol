@@ -576,24 +576,38 @@
     }
   },
   "zolvebegadol": {
+    "north": {
+      "store": "015",
+      "name": "קרית יובל",
+      "city": "",
+      "address": "אורגוואי 31",
+      "district": "north"
+    },
+    "telaviv": {
+      "store": "016",
+      "name": "מחנה יהודה",
+      "city": "יפו",
+      "address": "יפו 113",
+      "district": "telaviv"
+    },
     "jerusalem": {
-      "store": "003",
-      "name": "רמות עליית נוער",
-      "city": "ירושלים",
-      "address": "עליית הנוער 5",
+      "store": "033",
+      "name": "בית שמש",
+      "city": "",
+      "address": "בן איש חי 31",
       "district": "jerusalem"
     },
     "south": {
       "store": "019",
       "name": "אשדוד",
-      "city": "אשדוד",
+      "city": "",
       "address": "הרי הגולן  רובע י\"א 12",
       "district": "south"
     },
     "yosh": {
       "store": "009",
       "name": "מעלה אדומים האבן",
-      "city": "מעלה אדומים",
+      "city": "",
       "address": "האבן 15 אזור 07 15",
       "district": "yosh"
     }
