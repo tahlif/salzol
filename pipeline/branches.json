@@ -448,14 +448,14 @@
       "store": "053",
       "name": "עפולה נטו חיסכון* ת.",
       "city": "",
-      "address": "ברזילי יוסף 3",
+      "address": "ברזילאי יוסף 3",
       "district": "north"
     },
     "haifa": {
       "store": "163",
       "name": "המכולת כרמל חיפה ת.",
       "city": "",
-      "address": "unknown",
+      "address": "אידר 12",
       "district": "haifa"
     },
     "center": {
@@ -490,7 +490,7 @@
       "store": "077",
       "name": "סופר ספיר אריאל ב** ת.",
       "city": "",
-      "address": "unknown",
+      "address": "הציונות 78",
       "district": "yosh"
     }
   },
