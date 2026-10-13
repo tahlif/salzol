@@ -443,57 +443,7 @@
       "district": "south"
     }
   },
-  "supersapir": {
-    "north": {
-      "store": "053",
-      "name": "עפולה נטו חיסכון* ת.",
-      "city": "",
-      "address": "ברזילאי יוסף 3",
-      "district": "north"
-    },
-    "haifa": {
-      "store": "163",
-      "name": "המכולת כרמל חיפה ת.",
-      "city": "",
-      "address": "אידר 12",
-      "district": "haifa"
-    },
-    "center": {
-      "store": "194",
-      "name": "נטו חיסכון נתניה הפלדה* ת.",
-      "city": "",
-      "address": "unknown",
-      "district": "center"
-    },
-    "telaviv": {
-      "store": "190",
-      "name": "סופר ספיר חולון",
-      "city": "",
-      "address": "unknown",
-      "district": "telaviv"
-    },
-    "jerusalem": {
-      "store": "026",
-      "name": "בית הנציב ירושלים ת.",
-      "city": "דרך חברון",
-      "address": "דרך חברון 101",
-      "district": "jerusalem"
-    },
-    "south": {
-      "store": "085",
-      "name": "נטו חיסכון באר שבע* ת.",
-      "city": "ברוך קטינקא באר שבע",
-      "address": "ברוך קטינקא 2 באר שבע 2",
-      "district": "south"
-    },
-    "yosh": {
-      "store": "077",
-      "name": "סופר ספיר אריאל ב** ת.",
-      "city": "",
-      "address": "הציונות 78",
-      "district": "yosh"
-    }
-  },
+  "supersapir": {},
   "kingstore": {
     "north": {
       "store": "3378",
