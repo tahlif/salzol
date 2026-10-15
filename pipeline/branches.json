@@ -462,14 +462,14 @@
       "store": "194",
       "name": "נטו חיסכון נתניה הפלדה* ת.",
       "city": "",
-      "address": "unknown",
+      "address": "הפלדה 13",
       "district": "center"
     },
     "telaviv": {
       "store": "190",
       "name": "סופר ספיר חולון",
       "city": "",
-      "address": "unknown",
+      "address": "סוקולוב 48",
       "district": "telaviv"
     },
     "jerusalem": {
@@ -480,10 +480,10 @@
       "district": "jerusalem"
     },
     "south": {
-      "store": "085",
-      "name": "נטו חיסכון באר שבע* ת.",
-      "city": "ברוך קטינקא באר שבע",
-      "address": "ברוך קטינקא 2 באר שבע 2",
+      "store": "262",
+      "name": "סופר ספיר אופקים",
+      "city": "",
+      "address": "unknown",
       "district": "south"
     },
     "yosh": {
