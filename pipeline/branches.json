@@ -1,5 +1,55 @@
 {
-  "shufersal": {},
+  "shufersal": {
+    "north": {
+      "store": "342",
+      "name": "דיל כרמיאל- קניון לב",
+      "city": "",
+      "address": "מורד הגיא 100",
+      "district": "north"
+    },
+    "haifa": {
+      "store": "359",
+      "name": "דיל חיפה- גרנד קניון",
+      "city": "שמחה גולן",
+      "address": "שמחה גולן 54",
+      "district": "haifa"
+    },
+    "center": {
+      "store": "618",
+      "name": "BE ראשון לציון",
+      "city": "",
+      "address": "רוטשילד 49",
+      "district": "center"
+    },
+    "telaviv": {
+      "store": "117",
+      "name": "שלי תל אביב-איכילוב",
+      "city": "",
+      "address": "ויצמן 6",
+      "district": "telaviv"
+    },
+    "jerusalem": {
+      "store": "245",
+      "name": "דיל ירושלים- פסגתזאב",
+      "city": "",
+      "address": "שד' משה דין 106",
+      "district": "jerusalem"
+    },
+    "south": {
+      "store": "716",
+      "name": "Be mall 7  באר שבע",
+      "city": "",
+      "address": "30 הע\"ל",
+      "district": "south"
+    },
+    "yosh": {
+      "store": "133",
+      "name": "יש חסד ביתר עילית-  הר\"ן",
+      "city": "",
+      "address": "הר\"ן 6 פינת פנים המאירים",
+      "district": "yosh"
+    }
+  },
   "ramilevy": {
     "north": {
       "store": "036",
